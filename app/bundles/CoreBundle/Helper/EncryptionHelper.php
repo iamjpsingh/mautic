@@ -44,7 +44,7 @@ class EncryptionHelper
      */
     public static function generateKey(): string
     {
-        return hash('sha256', uniqid(mt_rand(), true));
+        return bin2hex(random_bytes(32));
     }
 
     /**

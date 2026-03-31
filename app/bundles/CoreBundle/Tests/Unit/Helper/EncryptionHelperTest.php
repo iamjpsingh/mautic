@@ -238,6 +238,20 @@ class EncryptionHelperTest extends \PHPUnit\Framework\TestCase
         $this->getEncryptionHelper();
     }
 
+    public function testGenerateKeyReturns64CharHexString(): void
+    {
+        $key = EncryptionHelper::generateKey();
+        $this->assertSame(64, strlen($key));
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $key);
+    }
+
+    public function testGenerateKeyIsUnique(): void
+    {
+        $key1 = EncryptionHelper::generateKey();
+        $key2 = EncryptionHelper::generateKey();
+        $this->assertNotSame($key1, $key2);
+    }
+
     public function testNoneSupported(): void
     {
         $this->mainCipherMock->expects($this->once())
