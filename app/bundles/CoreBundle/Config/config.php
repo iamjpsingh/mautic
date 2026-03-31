@@ -299,6 +299,25 @@ return [
                     '%mautic.application_dir%',
                 ],
             ],
+            'mautic.oauth2.registry' => [
+                'class'     => Mautic\CoreBundle\OAuth2\OAuthProviderRegistry::class,
+                'arguments' => [
+                    'mautic.helper.core_parameters',
+                    'mautic.helper.encryptor',
+                ],
+            ],
+            'mautic.oauth2.provider.google' => [
+                'class' => Mautic\CoreBundle\OAuth2\Provider\GoogleProvider::class,
+                'tag'   => 'mautic.oauth2_provider',
+            ],
+            'mautic.oauth2.provider.microsoft' => [
+                'class' => Mautic\CoreBundle\OAuth2\Provider\MicrosoftProvider::class,
+                'tag'   => 'mautic.oauth2_provider',
+            ],
+            'mautic.oauth2.provider.meta' => [
+                'class' => Mautic\CoreBundle\OAuth2\Provider\MetaProvider::class,
+                'tag'   => 'mautic.oauth2_provider',
+            ],
             'mautic.helper.ip_lookup' => [
                 'class'     => Mautic\CoreBundle\Helper\IpLookupHelper::class,
                 'arguments' => [
@@ -1429,5 +1448,25 @@ return [
         'redis_primary_only'                                      => false,
         Mautic\CoreBundle\Shortener\Shortener::SHORTENER_SERVICE  => null,
         'gdpr_user_purge_threshold'                               => 1095, // Minimum no. of days a user has to be inactive to get picked up by `mautic:maintenance:cleanup --gdpr`
+
+        // System-level OAuth2 provider credentials
+        'oauth2_google_client_id'         => '',
+        'oauth2_google_client_secret'     => '',
+        'oauth2_google_access_token'      => '',
+        'oauth2_google_refresh_token'     => '',
+        'oauth2_google_token_expires_at'  => null,
+        'oauth2_google_scopes'            => '',
+        'oauth2_microsoft_client_id'        => '',
+        'oauth2_microsoft_client_secret'    => '',
+        'oauth2_microsoft_access_token'     => '',
+        'oauth2_microsoft_refresh_token'    => '',
+        'oauth2_microsoft_token_expires_at' => null,
+        'oauth2_microsoft_scopes'           => '',
+        'oauth2_meta_client_id'           => '',
+        'oauth2_meta_client_secret'       => '',
+        'oauth2_meta_access_token'        => '',
+        'oauth2_meta_refresh_token'       => '',
+        'oauth2_meta_token_expires_at'    => null,
+        'oauth2_meta_scopes'              => '',
     ],
 ];
