@@ -11,7 +11,7 @@ use Mautic\WhatsAppBundle\Exception\PrimaryTransportNotEnabledException;
 class TransportChain
 {
     /**
-     * @var array<string, array{alias: string, integrationAlias: string, service: TransportInterface, published?: bool}>
+     * @var array<string, array<string, mixed>>
      */
     private array $transports = [];
 

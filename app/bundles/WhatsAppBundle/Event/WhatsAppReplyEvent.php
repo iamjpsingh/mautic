@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Mautic\WhatsAppBundle\Event;
+
+use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Entity\LeadEventLog;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\EventDispatcher\Event;
+
+class WhatsAppReplyEvent extends Event
+{
+    private ?Response $response = null;
+
+    private ?LeadEventLog $eventLog = null;
+
+    public function __construct(
+        private Lead $contact,
+        private string $message,
+        private ?string $messageType = 'text',
+    ) {
+    }
+
+    public function getContact(): Lead
+    {
+        return $this->contact;
+    }
+
+    public function getMessage(): string
+    {
+        return $this->message;
+    }
+
+    public function getMessageType(): ?string
+    {
+        return $this->messageType;
+    }
+
+    public function setResponse(Response $response): void
+    {
+        $this->response = $response;
+    }
+
+    public function getResponse(): ?Response
+    {
+        return $this->response;
+    }
+
+    public function getEventLog(): ?LeadEventLog
+    {
+        return $this->eventLog;
+    }
+
+    public function setEventLog(LeadEventLog $eventLog): void
+    {
+        $this->eventLog = $eventLog;
+    }
+}
