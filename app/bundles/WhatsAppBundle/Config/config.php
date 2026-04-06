@@ -27,7 +27,7 @@ return [
             'mautic.whatsapp.cloud.configuration' => [
                 'class'     => Mautic\WhatsAppBundle\Integration\MetaCloud\Configuration::class,
                 'arguments' => [
-                    'mautic.helper.integration',
+                    'mautic.helper.core_parameters',
                 ],
             ],
             'mautic.whatsapp.cloud.callback' => [

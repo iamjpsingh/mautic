@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Mautic\WhatsAppBundle\Integration\MetaCloud;
 
-use Mautic\PluginBundle\Helper\IntegrationHelper;
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\WhatsAppBundle\Exception\ConfigurationException;
 
+/**
+ * Reads WhatsApp configuration from core system parameters.
+ * No plugin dependency — configuration lives in Settings → Configuration → WhatsApp.
+ */
 class Configuration
 {
     private ?string $accessToken = null;
@@ -20,7 +24,7 @@ class Configuration
     private ?string $appSecret = null;
 
     public function __construct(
-        private IntegrationHelper $integrationHelper,
+        private CoreParametersHelper $coreParametersHelper,
     ) {
     }
 
@@ -74,6 +78,17 @@ class Configuration
         return $this->appSecret;
     }
 
+    public function isConfigured(): bool
+    {
+        try {
+            $this->setConfiguration();
+
+            return true;
+        } catch (ConfigurationException) {
+            return false;
+        }
+    }
+
     /**
      * @throws ConfigurationException
      */
@@ -83,36 +98,26 @@ class Configuration
             return;
         }
 
-        $integration = $this->integrationHelper->getIntegrationObject('MetaWhatsApp');
-
-        if (!$integration || !$integration->getIntegrationSettings()->getIsPublished()) {
-            throw new ConfigurationException('MetaWhatsApp integration is not published or not found');
+        if (!$this->coreParametersHelper->get('whatsapp_enabled')) {
+            throw new ConfigurationException('WhatsApp is not enabled in system configuration');
         }
 
-        $features = $integration->getIntegrationSettings()->getFeatureSettings();
-
-        $this->phoneNumberId = $features['phone_number_id'] ?? null;
+        $this->phoneNumberId = (string) $this->coreParametersHelper->get('whatsapp_phone_number_id');
         if (empty($this->phoneNumberId)) {
-            throw new ConfigurationException('WhatsApp phone number ID is not configured');
+            throw new ConfigurationException('WhatsApp Phone Number ID is not configured');
         }
 
-        $this->businessAccountId = $features['business_account_id'] ?? null;
+        $this->businessAccountId = (string) $this->coreParametersHelper->get('whatsapp_business_account_id');
         if (empty($this->businessAccountId)) {
             throw new ConfigurationException('WhatsApp Business Account ID is not configured');
         }
 
-        $this->webhookVerifyToken = $features['webhook_verify_token'] ?? null;
-        if (empty($this->webhookVerifyToken)) {
-            throw new ConfigurationException('WhatsApp webhook verify token is not configured');
+        $this->accessToken = (string) $this->coreParametersHelper->get('whatsapp_access_token');
+        if (empty($this->accessToken)) {
+            throw new ConfigurationException('WhatsApp Access Token is not configured');
         }
 
-        $keys = $integration->getDecryptedApiKeys();
-
-        if (empty($keys['password'])) {
-            throw new ConfigurationException('WhatsApp access token is not configured');
-        }
-
-        $this->accessToken = $keys['password'];
-        $this->appSecret   = $keys['secret'] ?? '';
+        $this->webhookVerifyToken = (string) $this->coreParametersHelper->get('whatsapp_webhook_verify_token');
+        $this->appSecret = (string) $this->coreParametersHelper->get('whatsapp_app_secret');
     }
 }
