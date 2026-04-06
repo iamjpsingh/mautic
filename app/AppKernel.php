@@ -147,6 +147,7 @@ class AppKernel extends Kernel
             new Mautic\ProjectBundle\MauticProjectBundle(),
             new Mautic\ReportBundle\MauticReportBundle(),
             new Mautic\SmsBundle\MauticSmsBundle(),
+            new Mautic\WhatsAppBundle\MauticWhatsAppBundle(),
             new Mautic\StageBundle\MauticStageBundle(),
             new Mautic\StatsBundle\MauticStatsBundle(),
             new Mautic\UserBundle\MauticUserBundle(),
