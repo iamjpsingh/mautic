@@ -104,28 +104,4 @@
     {{ form_rest(form) }}
 </div>
 
-{% if (updateSelect is not defined or updateSelect is empty) and not isExisting and not formContainsErrors(form) or messageType is empty %}
-    {{- include('@MauticCore/Helper/form_selecttype.html.twig',
-        {
-            'item'       : whatsapp,
-            'mauticLang' : {
-                'newListWhatsApp'     : 'mautic.whatsapp.type.template.header',
-                'newTemplateWhatsApp' : 'mautic.whatsapp.type.session.header',
-            },
-            'typePrefix'         : 'whatsapp',
-            'cancelUrl'          : 'mautic_whatsapp_index',
-            'header'             : 'mautic.whatsapp.type.header',
-            'typeOneHeader'      : 'mautic.whatsapp.type.template.header',
-            'typeOnePictogram'   : 'file--text',
-            'typeOneTag'         : 'mautic.whatsapp.type.template.tag',
-            'typeOneDifferences' : ['mautic.whatsapp.type.template.differences.1st', 'mautic.whatsapp.type.template.differences.2nd', 'mautic.whatsapp.type.template.differences.3rd', 'mautic.whatsapp.type.template.differences.4th', 'mautic.whatsapp.type.template.differences.5th'],
-            'typeOneOnClick'     : "Mautic.selectWhatsAppType('template');",
-            'typeTwoHeader'      : 'mautic.whatsapp.type.session.header',
-            'typeTwoTag'         : 'mautic.whatsapp.type.session.tag',
-            'typeTwoPictogram'   : 'mobile--chat',
-            'typeTwoDifferences' : ['mautic.whatsapp.type.session.differences.1st', 'mautic.whatsapp.type.session.differences.2nd', 'mautic.whatsapp.type.session.differences.3rd', 'mautic.whatsapp.type.session.differences.4th', 'mautic.whatsapp.type.session.differences.5th'],
-            'typeTwoOnClick'     : "Mautic.selectWhatsAppType('session');",
-        }
-    ) -}}
-{% endif %}
 {% endblock %}
