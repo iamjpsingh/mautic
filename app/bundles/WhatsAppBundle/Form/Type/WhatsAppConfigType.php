@@ -8,7 +8,6 @@ use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\WhatsAppBundle\WhatsApp\TransportChain;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -60,7 +59,7 @@ class WhatsAppConfigType extends AbstractType
             ],
         ]);
 
-        $builder->add('whatsapp_access_token', PasswordType::class, [
+        $builder->add('whatsapp_access_token', TextType::class, [
             'label'      => 'mautic.whatsapp.config.form.access_token',
             'label_attr' => ['class' => 'control-label'],
             'required'   => false,
@@ -70,7 +69,7 @@ class WhatsAppConfigType extends AbstractType
             ],
         ]);
 
-        $builder->add('whatsapp_app_secret', PasswordType::class, [
+        $builder->add('whatsapp_app_secret', TextType::class, [
             'label'      => 'mautic.whatsapp.config.form.app_secret',
             'label_attr' => ['class' => 'control-label'],
             'required'   => false,
