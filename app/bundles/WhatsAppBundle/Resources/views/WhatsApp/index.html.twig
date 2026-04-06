@@ -1,0 +1,26 @@
+{% extends '@MauticCore/Default/content.html.twig' %}
+{% block mauticContent %}whatsapp{% endblock %}
+{% block headerTitle %}{{ 'mautic.whatsapp.messages'|trans }}{% endblock %}
+{% block actions %}
+{{- include('@MauticCore/Helper/page_actions.html.twig',
+    {
+        'templateButtons' : {
+            'new' : permissions['whatsapp:messages:create'],
+        },
+        'routeBase' : 'whatsapp',
+    }
+) -}}
+{% endblock %}
+{% block content %}
+<div id="page-list-wrapper" class="panel panel-default">
+    {{- include('@MauticCore/Helper/list_toolbar.html.twig', {
+        'searchValue' : searchValue,
+        'searchId'    : 'whatsapp-search',
+        'action'      : currentRoute,
+    }) -}}
+
+    <div class="page-list">
+        {{ block('listResults') }}
+    </div>
+</div>
+{% endblock %}
