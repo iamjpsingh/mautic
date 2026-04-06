@@ -1,0 +1,150 @@
+{% extends '@MauticCore/FormTheme/form_simple.html.twig' %}
+{% form_theme form with [
+    '@MauticWhatsApp/FormTheme/WhatsAppSendList/whatsappsend_list_row.html.twig'
+] %}
+
+{% block mauticContent %}whatsapp{% endblock %}
+{# @var whatsapp \Mautic\WhatsAppBundle\Entity\WhatsApp #}
+{% set messageType     = whatsapp.getMessageType() %}
+{% set isExisting      = whatsapp.getId() %}
+{% set translationBase = 'mautic.whatsapp' %}
+{% set mauticContent   = 'whatsapp' %}
+
+{% block primaryFormContent %}
+<div class="row">
+    <div class="col-md-6">
+        {{ form_row(form.name) }}
+    </div>
+    <div class="col-md-6">
+        {{ form_row(form.messageType) }}
+    </div>
+</div>
+
+<!-- Template message section -->
+<div id="whatsapp-template-section"{% if messageType != 'template' %} class="hide"{% endif %}>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form_row(form.templateName) }}
+        </div>
+        <div class="col-md-6">
+            {{ form_row(form.templateLanguage) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {{ form_row(form.templateComponents) }}
+            <i class="text-secondary">{{ 'mautic.whatsapp.template.components.hint'|trans|purify }}</i>
+        </div>
+    </div>
+</div>
+
+<!-- Session message section -->
+<div id="whatsapp-session-section"{% if messageType != 'session' %} class="hide"{% endif %}>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="characters-count">
+                <label class="control-label" for="" data-toggle="tooltip" data-container="body" data-placement="top" title="" data-original-title="{{ 'mautic.whatsapp.form.nbcharacter.infobox'|trans }}">
+                    {{ 'mautic.whatsapp.form.nbcharacter.counter'|trans }}
+                    <span size="sm" class="label label-gray" id="whatsapp_nb_char">0</span>
+                </label>
+            </div>
+            {{ form_row(form.message) }}
+            <i class="text-secondary">{{ 'mautic.whatsapp.token.dropdown.hint'|trans|purify }}</i>
+        </div>
+    </div>
+</div>
+
+<!-- Media message section -->
+<div id="whatsapp-media-section"{% if messageType != 'media' %} class="hide"{% endif %}>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form_row(form.mediaType) }}
+        </div>
+        <div class="col-md-6">
+            {{ form_row(form.mediaUrl) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {{ form_row(form.mediaCaption) }}
+        </div>
+    </div>
+</div>
+
+<!-- Interactive message section -->
+<div id="whatsapp-interactive-section"{% if messageType != 'interactive' %} class="hide"{% endif %}>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form_row(form.interactiveType) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {{ form_row(form.interactiveHeader) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {{ form_row(form.interactiveBody) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {{ form_row(form.interactiveFooter) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            {{ form_row(form.interactiveAction) }}
+            <i class="text-secondary">{{ 'mautic.whatsapp.interactive.action.hint'|trans|purify }}</i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block rightFormContent %}
+{{ form_row(form.category) }}
+{{ form_row(form.isPublished, {
+    'attr': {
+        'data-none': 'mautic.core.form.sending_paused',
+        'data-start': 'mautic.core.form.sending_on_scheduled_start',
+        'data-both': 'mautic.core.form.sending_during_scheduled_period',
+        'data-end': 'mautic.core.form.available_until_scheduled_end'
+    }
+}) }}
+
+<div id="leadList"{% if 'template' == messageType %} class="hide"{% endif %}>
+    {{ form_row(form.lists) }}
+    {{ form_row(form.publishUp, {'label': 'mautic.core.form.sending.start_at'}) }}
+    {{ form_row(form.publishDown, {'label': 'mautic.core.form.sending.stop_at'}) }}
+</div>
+
+<div class="hide">
+    {{ form_rest(form) }}
+</div>
+
+{% if (updateSelect is not defined or updateSelect is empty) and not isExisting and not formContainsErrors(form) or messageType is empty %}
+    {{- include('@MauticCore/Helper/form_selecttype.html.twig',
+        {
+            'item'       : whatsapp,
+            'mauticLang' : {
+                'newListWhatsApp'     : 'mautic.whatsapp.type.template.header',
+                'newTemplateWhatsApp' : 'mautic.whatsapp.type.session.header',
+            },
+            'typePrefix'         : 'whatsapp',
+            'cancelUrl'          : 'mautic_whatsapp_index',
+            'header'             : 'mautic.whatsapp.type.header',
+            'typeOneHeader'      : 'mautic.whatsapp.type.template.header',
+            'typeOnePictogram'   : 'file--text',
+            'typeOneTag'         : 'mautic.whatsapp.type.template.tag',
+            'typeOneDifferences' : ['mautic.whatsapp.type.template.differences.1st', 'mautic.whatsapp.type.template.differences.2nd', 'mautic.whatsapp.type.template.differences.3rd', 'mautic.whatsapp.type.template.differences.4th', 'mautic.whatsapp.type.template.differences.5th'],
+            'typeOneOnClick'     : "Mautic.selectWhatsAppType('template');",
+            'typeTwoHeader'      : 'mautic.whatsapp.type.session.header',
+            'typeTwoTag'         : 'mautic.whatsapp.type.session.tag',
+            'typeTwoPictogram'   : 'mobile--chat',
+            'typeTwoDifferences' : ['mautic.whatsapp.type.session.differences.1st', 'mautic.whatsapp.type.session.differences.2nd', 'mautic.whatsapp.type.session.differences.3rd', 'mautic.whatsapp.type.session.differences.4th', 'mautic.whatsapp.type.session.differences.5th'],
+            'typeTwoOnClick'     : "Mautic.selectWhatsAppType('session');",
+        }
+    ) -}}
+{% endif %}
+{% endblock %}

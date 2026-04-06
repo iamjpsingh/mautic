@@ -1,0 +1,17 @@
+{% block _whatsapptemplatesend_list_row %}
+<div class="row">
+    <div class="col-xs-8">
+        {{ form_row(form.whatsappTemplate) }}
+    </div>
+    <div class="col-xs-4 mt-lg">
+        <div class="mt-3">
+            {{ form_row(form.newWhatsAppTemplateButton) }}
+        </div>
+    </div>
+</div>
+<div class="row mt-md">
+    <div class="col-xs-12">
+        {{ form_row(form.templateLanguage) }}
+    </div>
+</div>
+{% endblock %}

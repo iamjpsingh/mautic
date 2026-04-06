@@ -1,0 +1,336 @@
+{% if not isEmbedded %}
+    {% extends '@MauticCore/Default/content.html.twig' %}
+{% endif %}
+
+{% block mauticContent %}whatsapp{% endblock %}
+{% block headerTitle %}{{ whatsapp.getName() }}{% endblock %}
+
+{% block preHeader %}
+{{- include('@MauticCore/Helper/page_actions.html.twig',
+    {
+        'item'            : whatsapp,
+        'templateButtons' : {
+            'close' : securityHasEntityAccess(
+                permissions['whatsapp:messages:viewown'],
+                permissions['whatsapp:messages:viewother'],
+                whatsapp.getCreatedBy()
+            ),
+        },
+        'routeBase' : 'whatsapp',
+        'targetLabel': 'mautic.whatsapp.messages'|trans
+    }
+) -}}
+{{ include('@MauticCore/Modules/category--inline.html.twig', {'category': whatsapp.category}) }}
+{% endblock %}
+
+{% block actions %}
+    {% set customButtons = [] %}
+    {{- include('@MauticCore/Helper/page_actions.html.twig',
+        {
+            'item'            : whatsapp,
+            'customButtons'   : customButtons is defined ? customButtons : [],
+            'templateButtons' : {
+                'edit' : securityHasEntityAccess(
+                    permissions['whatsapp:messages:editown'],
+                    permissions['whatsapp:messages:editother'],
+                    whatsapp.getCreatedBy()
+                ),
+                'clone'  : permissions['whatsapp:messages:create'],
+                'delete' : securityHasEntityAccess(
+                    permissions['whatsapp:messages:deleteown'],
+                    permissions['whatsapp:messages:deleteother'],
+                    whatsapp.getCreatedBy()
+                ),
+            },
+            'routeBase' : 'whatsapp',
+        }
+    ) -}}
+{% endblock %}
+
+{% block publishStatus %}
+{{- include('@MauticCore/Helper/publishstatus_badge.html.twig', {
+    'entity': whatsapp,
+    'status': whatsapp.getPublishUp() is not null ? 'sending' : 'available'
+}) -}}
+<div class="label__divider"></div>
+{% set messageType = whatsapp.getMessageType() %}
+{% if messageType is empty %}
+    {% set messageType = 'template' %}
+{% endif %}
+{% set tags = [
+    {
+        color: 'high-contrast',
+        icon: messageType == 'template' ? 'ri-file-text-line'
+            : (messageType == 'session' ? 'ri-message-2-line'
+            : (messageType == 'media' ? 'ri-image-line'
+            : (messageType == 'interactive' ? 'ri-list-check' : 'ri-message-2-line'))),
+        label: messageType == 'template'
+            ? 'mautic.whatsapp.type.template'
+            : (messageType == 'session' ? 'mautic.whatsapp.type.session'
+            : (messageType == 'media' ? 'mautic.whatsapp.type.media'
+            : (messageType == 'interactive' ? 'mautic.whatsapp.type.interactive' : messageType)))
+    }
+] %}
+
+{% include '@MauticCore/Helper/_tag.html.twig' with { tags: tags } %}
+{% endblock %}
+
+{% set messageType = whatsapp.getMessageType() %}
+{% if messageType is empty %}
+    {% set messageType = 'template' %}
+{% endif %}
+
+{% block content %}
+<!-- start: box layout -->
+<div class="box-layout">
+    <!-- left section -->
+    <div class="col-md-7 col-lg-9 height-auto">
+        <div>
+            <!-- whatsapp detail collapseable toggler -->
+            <div class="collapse pr-md pl-md" id="whatsapp-details">
+                <div class="pr-md pl-md pb-md">
+                    <div class="panel shd-none mb-0">
+                        <table class="table table-hover mb-0">
+                            <tbody>
+                                {{- include('@MauticCore/Helper/details.html.twig', {'entity' : whatsapp}) -}}
+                                <tr>
+                                    <td width="20%"><span class="fw-b textTitle">{{ 'mautic.whatsapp.message.type'|trans }}</span></td>
+                                    <td>{{ ('mautic.whatsapp.type.' ~ messageType)|trans }}</td>
+                                </tr>
+                                {% if 'template' == messageType %}
+                                    <tr>
+                                        <td width="20%"><span class="fw-b textTitle">{{ 'mautic.whatsapp.template.name'|trans }}</span></td>
+                                        <td>{{ whatsapp.getTemplateName() }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%"><span class="fw-b textTitle">{{ 'mautic.whatsapp.template.language'|trans }}</span></td>
+                                        <td>{{ whatsapp.getTemplateLanguage() }}</td>
+                                    </tr>
+                                {% endif %}
+                                {% if 'media' == messageType %}
+                                    <tr>
+                                        <td width="20%"><span class="fw-b textTitle">{{ 'mautic.whatsapp.media.type'|trans }}</span></td>
+                                        <td>{{ whatsapp.getMediaType() }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="20%"><span class="fw-b textTitle">{{ 'mautic.whatsapp.media.url'|trans }}</span></td>
+                                        <td>{{ whatsapp.getMediaUrl() }}</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <!--/ whatsapp detail collapseable toggler -->
+        <div>
+            <div class="hr-expand nm">
+                <span data-toggle="tooltip" title="Detail">
+                    <a href="javascript:void(0)" class="arrow text-secondary collapsed" data-toggle="collapse" data-target="#whatsapp-details">
+                        <span class="caret"></span> {{ 'mautic.core.details'|trans }}
+                    </a>
+                </span>
+            </div>
+            <!-- some stats -->
+            <div class="pa-md">
+                <div class="row">
+                    <div class="col-sm-12">
+                        {% if security.isGranted('lead:leads:viewown') %}
+                        {{ include('@MauticCore/Modules/stat--icon.html.twig', {'stats': [
+                            {
+                                'title': 'mautic.whatsapp.stat.sent',
+                                'value': whatsapp.sentCount,
+                                'link': path('mautic_contact_index', {
+                                    'search': ('mautic.lead.lead.searchcommand.whatsapp_sent'|trans) ~ ':' ~ whatsapp.id
+                                }),
+                                'icon': 'ri-send-plane-line'
+                            },
+                            {
+                                'title': 'mautic.whatsapp.stat.delivered',
+                                'value': whatsapp.deliveredCount,
+                                'icon': 'ri-check-double-line'
+                            },
+                            {
+                                'title': 'mautic.whatsapp.stat.read',
+                                'value': whatsapp.readCount,
+                                'icon': 'ri-eye-line'
+                            },
+                            {
+                                'title': 'mautic.whatsapp.stat.failed',
+                                'value': whatsapp.failedCount,
+                                'icon': 'ri-error-warning-line'
+                            }
+                        ]}) }}
+                        {% endif %}
+                        <div class="panel">
+                            <div class="panel-body box-layout">
+                                <div class="col-md-3 va-m">
+                                    <h5 class="text-white dark-md fw-sb mb-xs">
+                                        <span class="ri-line-chart-fill"></span>
+                                        {{ 'mautic.core.stats'|trans }}
+                                    </h5>
+                                </div>
+                                <div class="col-md-9 va-m">
+                                    {{- include('@MauticCore/Helper/graph_dateselect.html.twig', {'dateRangeForm' : dateRangeForm, 'class' : 'pull-right'}) -}}
+                                </div>
+                            </div>
+                            <div class="d-flex fd-column pt-0 pl-15 pb-15 pr-15 min-h-256">
+                                {{- include('@MauticCore/Helper/chart.html.twig', {'chartData' : entityViews, 'chartType' : 'line', 'chartHeight' : 300}) -}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--/ stats -->
+
+            {{ customContent('details.stats.graph.below', _context) }}
+
+            <!-- tabs controls -->
+            <ul class="nav nav-tabs nav-tabs-contained">
+                <li class="active">
+                    <a href="#delivery-container" role="tab" data-toggle="tab">
+                        {{ 'mautic.whatsapp.tab.delivery_stats'|trans }}
+                    </a>
+                </li>
+                <li class="">
+                    <a href="#read-receipts-container" role="tab" data-toggle="tab">
+                        {{ 'mautic.whatsapp.tab.read_receipts'|trans }}
+                    </a>
+                </li>
+                <li class="">
+                    <a href="#contacts-container" role="tab" data-toggle="tab">
+                        {{ 'mautic.lead.leads'|trans }}
+                    </a>
+                </li>
+            </ul>
+            <!--/ tabs controls -->
+        </div>
+
+        <!-- start: tab-content -->
+        <div class="tab-content pa-md">
+            <div class="tab-pane active bdr-w-0" id="delivery-container">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{{ 'mautic.whatsapp.stat.metric'|trans }}</th>
+                                <th>{{ 'mautic.whatsapp.stat.count'|trans }}</th>
+                                <th>{{ 'mautic.whatsapp.stat.rate'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ 'mautic.whatsapp.stat.sent'|trans }}</td>
+                                <td>{{ whatsapp.sentCount }}</td>
+                                <td>100%</td>
+                            </tr>
+                            <tr>
+                                <td>{{ 'mautic.whatsapp.stat.delivered'|trans }}</td>
+                                <td>{{ whatsapp.deliveredCount }}</td>
+                                <td>{{ whatsapp.sentCount > 0 ? ((whatsapp.deliveredCount / whatsapp.sentCount) * 100)|number_format(1) ~ '%' : '0%' }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ 'mautic.whatsapp.stat.read'|trans }}</td>
+                                <td>{{ whatsapp.readCount }}</td>
+                                <td>{{ whatsapp.sentCount > 0 ? ((whatsapp.readCount / whatsapp.sentCount) * 100)|number_format(1) ~ '%' : '0%' }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ 'mautic.whatsapp.stat.failed'|trans }}</td>
+                                <td>{{ whatsapp.failedCount }}</td>
+                                <td>{{ whatsapp.sentCount > 0 ? ((whatsapp.failedCount / whatsapp.sentCount) * 100)|number_format(1) ~ '%' : '0%' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade in bdr-w-0" id="read-receipts-container">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{{ 'mautic.lead.lead.contact'|trans }}</th>
+                                <th>{{ 'mautic.whatsapp.stat.sent_at'|trans }}</th>
+                                <th>{{ 'mautic.whatsapp.stat.delivered_at'|trans }}</th>
+                                <th>{{ 'mautic.whatsapp.stat.read_at'|trans }}</th>
+                                <th>{{ 'mautic.whatsapp.stat.status'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if readReceipts is defined and readReceipts|length > 0 %}
+                                {% for receipt in readReceipts %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ path('mautic_contact_action', {'objectAction': 'view', 'objectId': receipt.lead.getId()}) }}" data-toggle="ajax">
+                                                {{ receipt.lead.getName() }}
+                                            </a>
+                                        </td>
+                                        <td>{{ receipt.dateSent|date('Y-m-d H:i:s') }}</td>
+                                        <td>{{ receipt.dateDelivered is not null ? receipt.dateDelivered|date('Y-m-d H:i:s') : '-' }}</td>
+                                        <td>{{ receipt.dateRead is not null ? receipt.dateRead|date('Y-m-d H:i:s') : '-' }}</td>
+                                        <td>
+                                            {% if receipt.dateRead is not null %}
+                                                <span class="label label-success">{{ 'mautic.whatsapp.status.read'|trans }}</span>
+                                            {% elseif receipt.dateDelivered is not null %}
+                                                <span class="label label-info">{{ 'mautic.whatsapp.status.delivered'|trans }}</span>
+                                            {% else %}
+                                                <span class="label label-default">{{ 'mautic.whatsapp.status.sent'|trans }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">{{ 'mautic.whatsapp.no_read_receipts'|trans }}</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade in bdr-w-0 page-list" id="contacts-container">
+                {{ contacts|raw }}
+            </div>
+        </div>
+        <!-- end: tab-content -->
+    </div>
+    <!--/ left section -->
+
+    <!-- right section -->
+    <div class="col-md-5 col-lg-3 height-auto">
+        <!-- message preview -->
+        <div class="panel mb-md">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ 'mautic.whatsapp.preview'|trans }}</h3>
+            </div>
+            <div class="panel-body">
+                {% if 'template' == messageType %}
+                    <div class="well well-sm">
+                        <strong>{{ 'mautic.whatsapp.template.name'|trans }}:</strong> {{ whatsapp.getTemplateName() }}<br>
+                        <strong>{{ 'mautic.whatsapp.template.language'|trans }}:</strong> {{ whatsapp.getTemplateLanguage() }}
+                    </div>
+                {% elseif 'media' == messageType %}
+                    <div class="well well-sm">
+                        <strong>{{ 'mautic.whatsapp.media.type'|trans }}:</strong> {{ whatsapp.getMediaType() }}<br>
+                        {% if whatsapp.getMediaUrl() %}
+                            <strong>{{ 'mautic.whatsapp.media.url'|trans }}:</strong> {{ whatsapp.getMediaUrl() }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% if whatsapp.getMessage() %}
+                    <div class="whatsapp-message-preview pa-sm" style="background-color: #dcf8c6; border-radius: 8px;">
+                        {{ whatsapp.getMessage()|purify }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <!--/ message preview -->
+        {{- include('@MauticCore/Helper/recentactivity.html.twig', {'logs' : logs}) -}}
+    </div>
+    <!--/ right section -->
+    <input name="entityId" id="entityId" type="hidden" value="{{ whatsapp.getId() }}" />
+</div>
+<!--/ end: box layout -->
+{% endblock %}
