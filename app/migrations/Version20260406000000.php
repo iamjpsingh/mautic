@@ -58,6 +58,7 @@ final class Version20260406000000 extends PreUpAssertionMigration
         // Create whatsapp_messages table
         $this->addSql("CREATE TABLE `{$this->messagesTable}` (
     `id`                   INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    `uuid`                 CHAR(36) DEFAULT NULL,
     `category_id`          INT UNSIGNED DEFAULT NULL,
     `name`                 VARCHAR(255) NOT NULL,
     `message`              LONGTEXT DEFAULT NULL,
