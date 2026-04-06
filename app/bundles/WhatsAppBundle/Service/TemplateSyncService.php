@@ -62,11 +62,19 @@ class TemplateSyncService
                     'Authorization' => 'Bearer '.$accessToken,
                 ],
                 'query' => [
-                    'limit' => 100,
+                    'limit'        => 100,
+                    'access_token' => $accessToken,
                 ],
             ]);
 
-            $data = $response->toArray();
+            $statusCode = $response->getStatusCode();
+            if ($statusCode >= 400) {
+                $errorBody = $response->getContent(false);
+                $this->logger->error('Meta API error: '.$errorBody);
+                throw new \RuntimeException('Meta API error ('.$statusCode.'): '.$errorBody);
+            }
+
+            $data = $response->toArray(false);
 
             foreach ($data['data'] ?? [] as $templateData) {
                 $metaTemplateId = (string) $templateData['id'];
