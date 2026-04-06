@@ -18,8 +18,12 @@ return function (ContainerConfigurator $configurator): void {
     $services->load('Mautic\\WhatsAppBundle\\', '../')
         ->exclude('../{'.implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, $excludes)).'}');
 
-    $services->load('Mautic\\WhatsAppBundle\\Entity\\', '../Entity/*Repository.php')
+    $services->load('Mautic\\WhatsAppBundle\\Entity\\', '../Entity/{WhatsAppMessageRepository,WhatsAppStatRepository}.php')
         ->tag(Doctrine\Bundle\DoctrineBundle\DependencyInjection\Compiler\ServiceRepositoryCompilerPass::REPOSITORY_SERVICE_TAG);
+
+    $services->set(Mautic\WhatsAppBundle\Entity\WhatsAppTemplateRepository::class)
+        ->factory([new \Symfony\Component\DependencyInjection\Reference('doctrine.orm.entity_manager'), 'getRepository'])
+        ->args([Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class]);
 
     $services->alias('mautic.whatsapp.model.whatsapp', Mautic\WhatsAppBundle\Model\WhatsAppModel::class);
 };
