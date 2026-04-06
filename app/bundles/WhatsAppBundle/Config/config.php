@@ -12,6 +12,33 @@ return [
                     'mautic.helper.integration',
                 ],
             ],
+            'mautic.whatsapp.cloud.transport' => [
+                'class'     => Mautic\WhatsAppBundle\Integration\MetaCloud\MetaCloudTransport::class,
+                'arguments' => [
+                    'mautic.whatsapp.cloud.configuration',
+                    'http_client',
+                    'monolog.logger.mautic',
+                ],
+                'tag'          => 'mautic.whatsapp_transport',
+                'tagArguments' => [
+                    'integrationAlias' => 'MetaWhatsApp',
+                ],
+            ],
+            'mautic.whatsapp.cloud.configuration' => [
+                'class'     => Mautic\WhatsAppBundle\Integration\MetaCloud\Configuration::class,
+                'arguments' => [
+                    'mautic.helper.integration',
+                ],
+            ],
+            'mautic.whatsapp.cloud.callback' => [
+                'class'     => Mautic\WhatsAppBundle\Integration\MetaCloud\MetaCloudCallback::class,
+                'arguments' => [
+                    'mautic.whatsapp.helper.contact',
+                    'mautic.whatsapp.cloud.configuration',
+                    'monolog.logger.mautic',
+                ],
+                'tag' => 'mautic.whatsapp_callback_handler',
+            ],
             'mautic.whatsapp.callback_handler_container' => [
                 'class' => Mautic\WhatsAppBundle\Callback\HandlerContainer::class,
             ],
