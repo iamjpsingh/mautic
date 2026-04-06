@@ -4,21 +4,6 @@ declare(strict_types=1);
 
 return [
     'services' => [
-        'helpers' => [
-            'mautic.helper.whatsapp' => [
-                'class'     => Mautic\WhatsAppBundle\Helper\WhatsAppHelper::class,
-                'arguments' => [
-                    'doctrine.orm.entity_manager',
-                    'mautic.lead.model.lead',
-                    'mautic.helper.phone_number',
-                    'mautic.whatsapp.model.whatsapp',
-                    'mautic.helper.integration',
-                    'mautic.lead.model.dnc',
-                    'mautic.helper.core_parameters',
-                ],
-                'alias' => 'whatsapp_helper',
-            ],
-        ],
         'other' => [
             'mautic.whatsapp.transport_chain' => [
                 'class'     => Mautic\WhatsAppBundle\WhatsApp\TransportChain::class,
@@ -41,26 +26,10 @@ return [
             'mautic.whatsapp.helper.reply' => [
                 'class'     => Mautic\WhatsAppBundle\Helper\ReplyHelper::class,
             ],
-            'mautic.whatsapp.broadcast.executioner' => [
-                'class'     => Mautic\WhatsAppBundle\Broadcast\BroadcastExecutioner::class,
-                'arguments' => [
-                    'mautic.whatsapp.model.whatsapp',
-                    'mautic.whatsapp.broadcast.query',
-                    'translator',
-                    'mautic.lead.repository.lead',
-                ],
-            ],
-            'mautic.whatsapp.broadcast.query' => [
-                'class'     => Mautic\WhatsAppBundle\Broadcast\BroadcastQuery::class,
-                'arguments' => [
-                    'doctrine.orm.entity_manager',
-                    'mautic.whatsapp.model.whatsapp',
-                ],
-            ],
         ],
         'integrations' => [
-            'mautic.integration.whatsapp_cloud' => [
-                'class'     => Mautic\WhatsAppBundle\Integration\WhatsAppCloudIntegration::class,
+            'mautic.integration.meta_whatsapp' => [
+                'class'     => Mautic\WhatsAppBundle\Integration\MetaWhatsAppIntegration::class,
                 'arguments' => [
                     'event_dispatcher',
                     'mautic.helper.cache_storage',
@@ -135,13 +104,6 @@ return [
                     'route'  => 'mautic_whatsapp_index',
                     'access' => ['whatsapp:messages:viewown', 'whatsapp:messages:viewother'],
                     'parent' => 'mautic.core.channels',
-                    'checks' => [
-                        'integration' => [
-                            'WhatsAppCloud' => [
-                                'enabled' => true,
-                            ],
-                        ],
-                    ],
                     'priority' => 65,
                 ],
             ],
