@@ -57,8 +57,8 @@ final class Version20260406000000 extends PreUpAssertionMigration
 
         // Create whatsapp_messages table
         $this->addSql("CREATE TABLE `{$this->messagesTable}` (
-    `id`                   INT AUTO_INCREMENT NOT NULL,
-    `category_id`          INT DEFAULT NULL,
+    `id`                   INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    `category_id`          INT UNSIGNED DEFAULT NULL,
     `name`                 VARCHAR(255) NOT NULL,
     `message`              LONGTEXT DEFAULT NULL,
     `message_type`         VARCHAR(20) NOT NULL DEFAULT 'template',
@@ -98,10 +98,10 @@ final class Version20260406000000 extends PreUpAssertionMigration
 
         // Create whatsapp_message_stats table
         $this->addSql("CREATE TABLE `{$this->statsTable}` (
-    `id`                   INT AUTO_INCREMENT NOT NULL,
-    `whatsapp_message_id`  INT NOT NULL,
-    `lead_id`              INT NOT NULL,
-    `list_id`              INT DEFAULT NULL,
+    `id`                   INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    `whatsapp_message_id`  INT UNSIGNED NOT NULL,
+    `lead_id`              BIGINT UNSIGNED NOT NULL,
+    `list_id`              INT UNSIGNED DEFAULT NULL,
     `date_sent`            DATETIME NOT NULL,
     `date_delivered`       DATETIME DEFAULT NULL,
     `date_read`            DATETIME DEFAULT NULL,
@@ -142,8 +142,8 @@ final class Version20260406000000 extends PreUpAssertionMigration
 
         // Create whatsapp_message_list_xref table
         $this->addSql("CREATE TABLE `{$this->xrefTable}` (
-    `whatsapp_message_id`  INT NOT NULL,
-    `leadlist_id`          INT NOT NULL,
+    `whatsapp_message_id`  INT UNSIGNED NOT NULL,
+    `leadlist_id`          INT UNSIGNED NOT NULL,
     PRIMARY KEY (`whatsapp_message_id`, `leadlist_id`)
 ) DEFAULT CHARACTER SET utf8mb4
   COLLATE `utf8mb4_unicode_ci`
