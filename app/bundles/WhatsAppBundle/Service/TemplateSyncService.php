@@ -54,7 +54,7 @@ class TemplateSyncService
 
         /** @var WhatsAppTemplateRepository $repository */
         $repository = $this->entityManager->getRepository(WhatsAppTemplate::class);
-        $now        = new \DateTimeImmutable();
+        $now        = new \DateTime();
 
         do {
             $response = $this->httpClient->request('GET', $url, [
@@ -173,7 +173,7 @@ class TemplateSyncService
                 ->setLanguage($language)
                 ->setCategory($category)
                 ->setComponents($components)
-                ->setLastSyncedAt(new \DateTimeImmutable());
+                ->setLastSyncedAt(new \DateTime());
 
             $this->entityManager->persist($template);
             $this->entityManager->flush();
