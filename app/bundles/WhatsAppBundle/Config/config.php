@@ -118,6 +118,7 @@ return [
         'whatsapp_business_account_id'  => null,
         'whatsapp_access_token'         => null,
         'whatsapp_webhook_verify_token' => null,
+        'whatsapp_app_secret'           => null,
         'whatsapp_frequency_number'     => 0,
         'whatsapp_frequency_time'       => 'DAY',
         'whatsapp_transport'            => 'mautic.whatsapp.cloud.transport',

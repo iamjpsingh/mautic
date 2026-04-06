@@ -1,0 +1,47 @@
+{% block _config_whatsappconfig_widget %}
+<h4 class="fw-sb mt-48 mb-xs">{{ 'mautic.config.tab.whatsappconfig'|trans }}</h4>
+<div class="text-muted small pb-md">{{ 'mautic.core.config.header.whatsappconfig.description'|trans }}</div>
+<div class="row">
+    <div class="panel panel-default mb-md">
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-xs-12">
+                    {{ form_row(form.whatsapp_enabled) }}
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form_row(form.whatsapp_phone_number_id) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_row(form.whatsapp_business_account_id) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form_row(form.whatsapp_access_token) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_row(form.whatsapp_app_secret) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form_row(form.whatsapp_webhook_verify_token) }}
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-xs-12">
+                    {% if form.whatsapp_transport.vars.choices|length %}
+                        {{ form_row(form.whatsapp_transport) }}
+                    {% else %}
+                        {{ 'mautic.whatsapp.config.no_transport'|trans }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
