@@ -1,0 +1,264 @@
+{% set isIndex = tmpl == 'index' ? true : false %}
+{% set tmpl = 'list' %}
+{% extends isIndex ? '@MauticCore/Default/content.html.twig' : '@MauticCore/Default/raw_output.html.twig' %}
+{% block mauticContent %}whatsapp{% endblock %}
+{% block headerTitle %}{{ 'mautic.whatsapp.messages'|trans }}{% endblock %}
+{% block content %}
+    {% if isIndex %}
+    <div id="page-list-wrapper" class="{% if items|length > 0 or searchValue is not empty %}panel {% endif %}panel-default">
+        {{- include('@MauticCore/Helper/list_toolbar.html.twig', {
+            'searchValue': searchValue,
+            'searchId': 'whatsapp-search',
+            'action': currentRoute,
+            'page_actions': {
+                'templateButtons': {
+                    'new': permissions['whatsapp:messages:create']
+                },
+                'routeBase': 'whatsapp'
+            },
+            'quickFilters': [
+                {
+                    'search': 'mautic.core.searchcommand.ispublished',
+                    'label': 'mautic.core.form.available',
+                    'tooltip': 'mautic.core.searchcommand.ispublished.description',
+                    'icon': 'ri-check-line'
+                },
+                {
+                    'search': 'mautic.core.searchcommand.isunpublished',
+                    'label': 'mautic.core.form.unavailable',
+                    'tooltip': 'mautic.core.searchcommand.isunpublished.description',
+                    'icon': 'ri-close-line'
+                },
+                {
+                    'search': 'mautic.core.searchcommand.isuncategorized',
+                    'label': 'mautic.core.form.uncategorized',
+                    'tooltip': 'mautic.core.searchcommand.isuncategorized.description',
+                    'icon': 'ri-folder-unknow-line'
+                },
+                {
+                    'search': 'mautic.core.searchcommand.ismine',
+                    'label': 'mautic.core.searchcommand.ismine.label',
+                    'tooltip': 'mautic.core.searchcommand.ismine.description',
+                    'icon': 'ri-user-line'
+                }
+            ]
+        }) -}}
+
+        <div class="page-list">
+            {{ block('listResults') }}
+        </div>
+    </div>
+
+    {{ include('@MauticCore/Modules/protip.html.twig', {
+        tip: random(['mautic.protip.whatsapp.rich_media', 'mautic.protip.whatsapp.templates', 'mautic.protip.whatsapp.read_receipts'])
+    }) }}
+    {% else %}
+        {{ block('listResults') }}
+    {% endif %}
+{% endblock %}
+
+{% block listResults %}
+{% if items|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover whatsapp-list">
+            <thead>
+            <tr>
+                {{- include(
+                    '@MauticCore/Helper/tableheader.html.twig',
+                    {
+                        'checkall'        : 'true',
+                        'routeBase'       : 'whatsapp',
+                        'templateButtons' : {
+                            'delete' : permissions['whatsapp:messages:deleteown'] or permissions['whatsapp:messages:deleteother'],
+                        }
+                    }
+                ) -}}
+
+                {{- include(
+                    '@MauticCore/Helper/tableheader.html.twig',
+                    {
+                        'sessionVar' : 'whatsapp',
+                        'orderBy'    : 'e.name',
+                        'text'       : 'mautic.core.name',
+                        'class'      : 'col-whatsapp-name',
+                        'default'    : true,
+                    }
+                ) -}}
+
+                {{- include(
+                    '@MauticCore/Helper/tableheader.html.twig',
+                    {
+                        'sessionVar' : 'whatsapp',
+                        'orderBy'    : 'e.messageType',
+                        'text'       : 'mautic.whatsapp.message.type',
+                        'class'      : 'visible-md visible-lg col-whatsapp-type',
+                    }
+                ) -}}
+
+                {{- include(
+                    '@MauticCore/Helper/tableheader.html.twig',
+                    {
+                        'sessionVar' : 'whatsapp',
+                        'orderBy'    : 'c.title',
+                        'text'       : 'mautic.core.category',
+                        'class'      : 'visible-md visible-lg col-whatsapp-category',
+                    }
+                ) -}}
+
+                <th class="visible-sm visible-md visible-lg col-whatsapp-stats">{{ 'mautic.core.stats'|trans }}</th>
+
+                {{- include(
+                    '@MauticCore/Helper/tableheader.html.twig',
+                    {
+                        'sessionVar' : 'whatsapp',
+                        'orderBy'    : 'e.id',
+                        'text'       : 'mautic.core.id',
+                        'class'      : 'visible-md visible-lg col-whatsapp-id',
+                    }
+                ) -}}
+            </tr>
+            </thead>
+            <tbody>
+            {# @var item \Mautic\WhatsAppBundle\Entity\WhatsApp #}
+            {% for item in items %}
+                {% set messageType = item.getMessageType() %}
+                <tr>
+                    <td>
+                        {% set edit = securityHasEntityAccess(
+                            permissions['whatsapp:messages:editown'],
+                            permissions['whatsapp:messages:editother'],
+                            item.getCreatedBy()
+                        ) %}
+                        {% set customButtons = [
+                            {
+                                'attr' : {
+                                    'data-toggle' : 'ajaxmodal',
+                                    'data-target' : '#MauticSharedModal',
+                                    'data-header' : 'mautic.whatsapp.messages.header.preview'|trans,
+                                    'data-footer' : 'false',
+                                    'href'        : path('mautic_whatsapp_action', { 'objectId' : item.getId(), 'objectAction' : 'preview' }),
+                                },
+                                'btnText'   : 'mautic.whatsapp.preview'|trans,
+                                'iconClass' : 'ri-share-forward-box-fill',
+                            }
+                        ] %}
+                        {{- include(
+                            '@MauticCore/Helper/list_actions.html.twig',
+                            {
+                                'item'            : item,
+                                'templateButtons' : {
+                                    'edit'   : edit,
+                                    'clone'  : permissions['whatsapp:messages:create'],
+                                    'delete' : securityHasEntityAccess(
+                                        permissions['whatsapp:messages:deleteown'],
+                                        permissions['whatsapp:messages:deleteother'],
+                                        item.getCreatedBy()
+                                    ),
+                                },
+                                'routeBase'     : 'whatsapp',
+                                'customButtons' : customButtons,
+                            }
+                        ) -}}
+                    </td>
+                    <td>
+                        <div>
+                            {{- include('@MauticCore/Helper/publishstatus_icon.html.twig',
+                                {
+                                    'item'  : item,
+                                    'model' : 'whatsapp',
+                                }
+                            ) -}}
+                            <a href="{{ path('mautic_whatsapp_action', {'objectAction' : 'view', 'objectId' : item.getId()}) }}" data-toggle="ajax">
+                                {{ item.getName() }}
+                                {% if 'template' == messageType %}
+                                    <span data-toggle="tooltip" title="{{ 'mautic.whatsapp.icon_tooltip.template_message'|trans }}">
+                                        <i class="ri-file-text-line fs-14"></i>
+                                    </span>
+                                {% elseif 'media' == messageType %}
+                                    <span data-toggle="tooltip" title="{{ 'mautic.whatsapp.icon_tooltip.media_message'|trans }}">
+                                        <i class="ri-image-line fs-14"></i>
+                                    </span>
+                                {% elseif 'interactive' == messageType %}
+                                    <span data-toggle="tooltip" title="{{ 'mautic.whatsapp.icon_tooltip.interactive_message'|trans }}">
+                                        <i class="ri-list-check fs-14"></i>
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </div>
+                    </td>
+                    <td class="visible-md visible-lg">
+                        {% if 'template' == messageType %}
+                            <span class="label label-default">{{ 'mautic.whatsapp.type.template'|trans }}</span>
+                        {% elseif 'session' == messageType %}
+                            <span class="label label-info">{{ 'mautic.whatsapp.type.session'|trans }}</span>
+                        {% elseif 'media' == messageType %}
+                            <span class="label label-primary">{{ 'mautic.whatsapp.type.media'|trans }}</span>
+                        {% elseif 'interactive' == messageType %}
+                            <span class="label label-warning">{{ 'mautic.whatsapp.type.interactive'|trans }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="visible-md visible-lg">
+                        {{ include('@MauticCore/Modules/category--expanded.html.twig', {'category': item.getCategory()}) }}
+                    </td>
+                    <td class="visible-sm visible-md visible-lg col-stats" data-stats="{{ item.getId() }}">
+                        <span class="mt-xs label label-green"
+                              id="sent-count-{{ item.getId() }}"
+                              data-toggle="tooltip"
+                              title="{{ 'mautic.whatsapp.stat.sent.tooltip'|trans }}">
+                            <a href="{{ path('mautic_contact_index', {'search' : 'mautic.lead.lead.searchcommand.whatsapp_sent'|trans ~ ':' ~ item.getId()}) }}">
+                                {{ 'mautic.whatsapp.stat.sentcount'|trans({'%count%' : item.getSentCount()}) }}
+                            </a>
+                        </span>
+                        <span class="mt-xs label label-info"
+                              id="delivered-count-{{ item.getId() }}"
+                              data-toggle="tooltip"
+                              title="{{ 'mautic.whatsapp.stat.delivered.tooltip'|trans }}">
+                            {{ 'mautic.whatsapp.stat.deliveredcount'|trans({'%count%' : item.getDeliveredCount()}) }}
+                        </span>
+                        <span class="mt-xs label label-primary"
+                              id="read-count-{{ item.getId() }}"
+                              data-toggle="tooltip"
+                              title="{{ 'mautic.whatsapp.stat.read.tooltip'|trans }}">
+                            {{ 'mautic.whatsapp.stat.readcount'|trans({'%count%' : item.getReadCount()}) }}
+                        </span>
+                    </td>
+                    <td class="visible-md visible-lg">{{ item.getId() }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="panel-footer">
+        {{- include('@MauticCore/Helper/pagination.html.twig', {
+            'totalItems' : totalItems,
+            'page'       : page,
+            'limit'      : limit,
+            'baseUrl'    : path('mautic_whatsapp_index'),
+            'sessionVar' : 'whatsapp',
+        }) -}}
+    </div>
+{% elseif not configured %}
+    {{- include('@MauticCore/Helper/noresults.html.twig', { 'header' : 'mautic.whatsapp.disabled', 'message' : 'mautic.whatsapp.enable.in.configuration' }) -}}
+{% else %}
+    {% if searchValue is not empty %}
+        {{- include('@MauticCore/Helper/noresults.html.twig', {'tip' : 'mautic.category.noresults.tip'}) -}}
+    {% else %}
+        <div class="mt-80 col-md-offset-2 col-lg-offset-3 col-md-8 col-lg-5 height-auto">
+            {% set childContainer %}
+                <div class="mt-32 mb-md">
+                    {% include '@MauticCore/Components/pictogram.html.twig' with {
+                        'pictogram': 'mobile--chat',
+                        'size': '80'
+                    } %}
+                </div>
+            {% endset %}
+            {% include '@MauticCore/Components/content-block.html.twig' with {
+                heading: 'mautic.whatsapp.contentblock.heading',
+                subheading: 'mautic.whatsapp.contentblock.subheading',
+                copy: 'mautic.whatsapp.contentblock.copy',
+                childContainer: childContainer
+            } %}
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock %}
