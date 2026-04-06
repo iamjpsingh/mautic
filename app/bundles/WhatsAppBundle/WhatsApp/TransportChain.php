@@ -16,9 +16,10 @@ class TransportChain
     private array $transports = [];
 
     public function __construct(
-        private string $primaryTransport,
-        private IntegrationHelper $integrationHelper,
+        private ?string $primaryTransport = '',
+        private ?IntegrationHelper $integrationHelper = null,
     ) {
+        $this->primaryTransport = $primaryTransport ?? '';
     }
 
     public function addTransport(
