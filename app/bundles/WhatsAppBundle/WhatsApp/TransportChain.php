@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Mautic\WhatsAppBundle\WhatsApp;
 
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\LeadBundle\Entity\Lead;
-use Mautic\PluginBundle\Helper\IntegrationHelper;
 use Mautic\WhatsAppBundle\Exception\PrimaryTransportNotEnabledException;
 
+/**
+ * Manages WhatsApp transports at core level.
+ * Unlike SMS which uses plugin integration checks,
+ * WhatsApp is a core channel — enabled via system configuration.
+ */
 class TransportChain
 {
     /**
@@ -17,7 +22,7 @@ class TransportChain
 
     public function __construct(
         private ?string $primaryTransport = '',
-        private ?IntegrationHelper $integrationHelper = null,
+        private ?CoreParametersHelper $coreParametersHelper = null,
     ) {
         $this->primaryTransport = $primaryTransport ?? '';
     }
@@ -90,7 +95,7 @@ class TransportChain
     }
 
     /**
-     * @return array<string, array{alias: string, integrationAlias: string, service: TransportInterface, published?: bool}>
+     * @return array<string, array<string, mixed>>
      */
     public function getTransports(): array
     {
@@ -114,25 +119,24 @@ class TransportChain
     }
 
     /**
+     * Core-level check: transport is enabled if WhatsApp is enabled
+     * in system configuration and credentials are configured.
+     * No plugin toggle needed.
+     *
      * @return array<string, TransportInterface>
      */
     public function getEnabledTransports(): array
     {
         $enabled = [];
+        $isWhatsAppEnabled = $this->coreParametersHelper?->get('whatsapp_enabled') ?? false;
+        $hasAccessToken = !empty($this->coreParametersHelper?->get('whatsapp_access_token'));
+
+        if (!$isWhatsAppEnabled || !$hasAccessToken) {
+            return $enabled;
+        }
 
         foreach ($this->transports as $alias => $transport) {
-            if (!isset($transport['published'])) {
-                $integration = $this->integrationHelper->getIntegrationObject($transport['integrationAlias']);
-                if (!$integration) {
-                    continue;
-                }
-                $transport['published']   = $integration->getIntegrationSettings()->getIsPublished();
-                $this->transports[$alias] = $transport;
-            }
-
-            if ($transport['published']) {
-                $enabled[$alias] = $transport['service'];
-            }
+            $enabled[$alias] = $transport['service'];
         }
 
         return $enabled;
