@@ -65,11 +65,6 @@
             {{ form_row(form.mediaUrl) }}
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            {{ form_row(form.mediaCaption) }}
-        </div>
-    </div>
 </div>
 
 <!-- Interactive message section -->
@@ -81,22 +76,7 @@
     </div>
     <div class="row">
         <div class="col-md-12">
-            {{ form_row(form.interactiveHeader) }}
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            {{ form_row(form.interactiveBody) }}
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            {{ form_row(form.interactiveFooter) }}
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            {{ form_row(form.interactiveAction) }}
+            {{ form_row(form.interactiveData) }}
             <i class="text-secondary">{{ 'mautic.whatsapp.interactive.action.hint'|trans|purify }}</i>
         </div>
     </div>
