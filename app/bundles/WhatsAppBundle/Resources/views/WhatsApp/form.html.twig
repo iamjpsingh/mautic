@@ -4,9 +4,10 @@
 ] %}
 
 {% block mauticContent %}whatsapp{% endblock %}
-{# @var whatsapp \Mautic\WhatsAppBundle\Entity\WhatsApp #}
-{% set messageType     = whatsapp.getMessageType() %}
-{% set isExisting      = whatsapp.getId() %}
+{# @var message \Mautic\WhatsAppBundle\Entity\WhatsAppMessage #}
+{% set whatsapp        = message|default(null) %}
+{% set messageType     = whatsapp ? whatsapp.getMessageType() : 'template' %}
+{% set isExisting      = whatsapp ? whatsapp.getId() : false %}
 {% set translationBase = 'mautic.whatsapp' %}
 {% set mauticContent   = 'whatsapp' %}
 
