@@ -230,19 +230,8 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
 
         $metadata->addConstraint(new Callback(
             function (WhatsAppMessage $entity, ExecutionContextInterface $context): void {
-                // Validate template fields when message type is template
-                if (self::MESSAGE_TYPE_TEMPLATE === $entity->getMessageType()) {
-                    if (empty($entity->getTemplateName())) {
-                        $context->buildViolation('mautic.whatsapp.template_name.required')
-                            ->atPath('templateName')
-                            ->addViolation();
-                    }
-                    if (empty($entity->getTemplateLanguage())) {
-                        $context->buildViolation('mautic.whatsapp.template_language.required')
-                            ->atPath('templateLanguage')
-                            ->addViolation();
-                    }
-                }
+                // Template name/language are auto-filled from templateId in controller
+                // No validation needed here for template fields
 
                 // Validate media fields when message type is media
                 if (self::MESSAGE_TYPE_MEDIA === $entity->getMessageType()) {
