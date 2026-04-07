@@ -270,18 +270,20 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
                     }
                 }
 
-                // Validate lists for broadcast type
-                $validator  = $context->getValidator();
-                $violations = $validator->validate(
-                    $entity->getLists(),
-                    [
-                        new LeadListAccess(),
-                    ]
-                );
-                foreach ($violations as $violation) {
-                    $context->buildViolation($violation->getMessage())
-                        ->atPath('lists')
-                        ->addViolation();
+                // Validate lists only for broadcast/list type messages
+                if ($entity->getLists()->count() > 0) {
+                    $validator  = $context->getValidator();
+                    $violations = $validator->validate(
+                        $entity->getLists(),
+                        [
+                            new LeadListAccess(),
+                        ]
+                    );
+                    foreach ($violations as $violation) {
+                        $context->buildViolation($violation->getMessage())
+                            ->atPath('lists')
+                            ->addViolation();
+                    }
                 }
             },
         ));
