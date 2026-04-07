@@ -445,10 +445,10 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
     /**
      * @param array<string, mixed> $templateComponents
      */
-    public function setTemplateComponents(array $templateComponents): self
+    public function setTemplateComponents(?array $templateComponents): self
     {
-        $this->isChanged('templateComponents', $templateComponents);
-        $this->templateComponents = $templateComponents;
+        $this->isChanged('templateComponents', $templateComponents ?? []);
+        $this->templateComponents = $templateComponents ?? [];
 
         return $this;
     }
@@ -503,10 +503,10 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
     /**
      * @param array<string, mixed> $interactiveData
      */
-    public function setInteractiveData(array $interactiveData): self
+    public function setInteractiveData(?array $interactiveData): self
     {
-        $this->isChanged('interactiveData', $interactiveData);
-        $this->interactiveData = $interactiveData;
+        $this->isChanged('interactiveData', $interactiveData ?? []);
+        $this->interactiveData = $interactiveData ?? [];
 
         return $this;
     }
