@@ -16,6 +16,7 @@ use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Form\Type\LeadListType;
 use Mautic\WhatsAppBundle\Entity\WhatsAppMessage;
+use Mautic\WhatsAppBundle\Entity\WhatsAppTemplateRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
@@ -23,9 +24,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\FormEvents;
-use Symfony\Component\Form\FormInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -35,6 +33,7 @@ class WhatsAppType extends AbstractType
 {
     public function __construct(
         private readonly EntityManager $em,
+        private readonly WhatsAppTemplateRepository $templateRepository,
     ) {
     }
 
@@ -50,17 +49,6 @@ class WhatsAppType extends AbstractType
                 'label'      => 'mautic.whatsapp.form.internal.name',
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => ['class' => 'form-control'],
-            ]
-        );
-
-        $builder->add(
-            'description',
-            TextareaType::class,
-            [
-                'label'      => 'mautic.whatsapp.form.internal.description',
-                'label_attr' => ['class' => 'control-label'],
-                'attr'       => ['class' => 'form-control'],
-                'required'   => false,
             ]
         );
 
@@ -85,24 +73,26 @@ class WhatsAppType extends AbstractType
             ]
         );
 
-        // Session / text message body
+        // Template selector — populated from approved WhatsApp templates
+        $templateChoices = $this->buildTemplateChoices();
         $builder->add(
-            'message',
-            TextareaType::class,
+            'templateId',
+            ChoiceType::class,
             [
-                'label'      => 'mautic.whatsapp.form.message',
+                'label'      => 'mautic.whatsapp.form.template_select',
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
-                    'class'                => 'form-control',
-                    'data-token-activator' => '{',
-                    'data-token-visual'    => 'false',
-                    'rows'                 => 6,
+                    'class'    => 'form-control',
+                    'onchange' => 'Mautic.whatsappTemplateSelected(this)',
                 ],
-                'required' => false,
+                'choices'     => $templateChoices,
+                'required'    => false,
+                'placeholder' => 'mautic.whatsapp.form.template_select.placeholder',
+                'mapped'      => false,
             ]
         );
 
-        // Template fields
+        // Template fields (auto-filled from templateId selection)
         $builder->add(
             'templateName',
             TextType::class,
@@ -110,8 +100,9 @@ class WhatsAppType extends AbstractType
                 'label'      => 'mautic.whatsapp.form.template_name',
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
-                    'class'   => 'form-control',
-                    'tooltip' => 'mautic.whatsapp.form.template_name.help',
+                    'class'    => 'form-control',
+                    'tooltip'  => 'mautic.whatsapp.form.template_name.help',
+                    'readonly' => 'readonly',
                 ],
                 'required' => false,
             ]
@@ -126,6 +117,7 @@ class WhatsAppType extends AbstractType
                 'attr'       => [
                     'class'       => 'form-control',
                     'placeholder' => 'en_US',
+                    'readonly'    => 'readonly',
                 ],
                 'required' => false,
             ]
@@ -140,6 +132,24 @@ class WhatsAppType extends AbstractType
                 'attr'     => [
                     'class' => 'form-control whatsapp-template-components',
                 ],
+            ]
+        );
+
+        // Session / text message body
+        $builder->add(
+            'message',
+            TextareaType::class,
+            [
+                'label'      => 'mautic.whatsapp.form.message',
+                'label_attr' => ['class' => 'control-label'],
+                'attr'       => [
+                    'class'                => 'form-control',
+                    'data-token-activator' => '{',
+                    'data-token-visual'    => 'false',
+                    'rows'                 => 6,
+                    'maxlength'            => 4096,
+                ],
+                'required' => false,
             ]
         );
 
@@ -240,8 +250,6 @@ class WhatsAppType extends AbstractType
             ]
         );
 
-        $builder->add('buttons', FormButtonsType::class);
-
         if (!empty($options['update_select'])) {
             $builder->add(
                 'buttons',
@@ -279,5 +287,28 @@ class WhatsAppType extends AbstractType
         );
 
         $resolver->setDefined(['update_select']);
+    }
+
+    /**
+     * Build choices array from approved WhatsApp templates.
+     *
+     * @return array<string, int>
+     */
+    private function buildTemplateChoices(): array
+    {
+        $templates = $this->templateRepository->findApproved();
+        $choices   = [];
+
+        foreach ($templates as $template) {
+            $label = sprintf(
+                '%s (%s) — %s',
+                $template->getName(),
+                $template->getLanguage(),
+                $template->getCategory() ?? 'N/A'
+            );
+            $choices[$label] = $template->getId();
+        }
+
+        return $choices;
     }
 }

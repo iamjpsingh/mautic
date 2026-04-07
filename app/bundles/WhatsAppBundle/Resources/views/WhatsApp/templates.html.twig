@@ -1,0 +1,91 @@
+{% extends '@MauticCore/Default/content.html.twig' %}
+
+{% block mauticContent %}whatsapp_templates{% endblock %}
+
+{% block headerTitle %}{{ 'mautic.whatsapp.templates.title'|trans }}{% endblock %}
+
+{% block actions %}
+    <div class="btn-group">
+        <a class="btn btn-default btn-nospin" onclick="Mautic.whatsappSyncTemplates();">
+            <i class="ri-refresh-line"></i>
+            {{ 'mautic.whatsapp.template.sync_from_meta'|trans }}
+        </a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="panel panel-default">
+    {% if templates|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover whatsapp-templates-list">
+            <thead>
+                <tr>
+                    <th>{{ 'mautic.core.name'|trans }}</th>
+                    <th>{{ 'mautic.whatsapp.template.category'|trans }}</th>
+                    <th>{{ 'mautic.whatsapp.form.template_language'|trans }}</th>
+                    <th>{{ 'mautic.whatsapp.template.status'|trans }}</th>
+                    <th>{{ 'mautic.whatsapp.template.last_synced'|trans }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for template in templates %}
+                <tr class="whatsapp-template-row" data-template-id="{{ template.getId() }}" data-toggle="collapse" data-target="#template-detail-{{ template.getId() }}" style="cursor:pointer;">
+                    <td>
+                        <strong>{{ template.getName() }}</strong>
+                    </td>
+                    <td>
+                        {% if template.getCategory() == 'MARKETING' %}
+                            <span class="label label-primary">{{ template.getCategory() }}</span>
+                        {% elseif template.getCategory() == 'UTILITY' %}
+                            <span class="label label-info">{{ template.getCategory() }}</span>
+                        {% elseif template.getCategory() == 'AUTHENTICATION' %}
+                            <span class="label label-warning">{{ template.getCategory() }}</span>
+                        {% else %}
+                            <span class="label label-default">{{ template.getCategory()|default('—') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ template.getLanguage() }}</td>
+                    <td>
+                        {% if template.getStatus() == 'APPROVED' %}
+                            <span class="label label-success">{{ template.getStatus() }}</span>
+                        {% elseif template.getStatus() == 'PENDING' %}
+                            <span class="label label-warning">{{ template.getStatus() }}</span>
+                        {% elseif template.getStatus() == 'REJECTED' %}
+                            <span class="label label-danger">{{ template.getStatus() }}</span>
+                        {% else %}
+                            <span class="label label-default">{{ template.getStatus() }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if template.getLastSyncedAt() %}
+                            {{ template.getLastSyncedAt()|date('Y-m-d H:i') }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr id="template-detail-{{ template.getId() }}" class="collapse">
+                    <td colspan="5" class="bg-white">
+                        <div class="pa-md">
+                            <strong>{{ 'mautic.whatsapp.template.meta_id'|trans }}:</strong>
+                            {{ template.getMetaTemplateId()|default('—') }}
+                            {% if template.getComponents() %}
+                                <hr />
+                                <strong>{{ 'mautic.whatsapp.template.components_preview'|trans }}:</strong>
+                                <pre class="mt-sm" style="max-height:300px;overflow:auto;">{{ template.getComponents()|json_encode(constant('JSON_PRETTY_PRINT'))|e }}</pre>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        {{- include('@MauticCore/Helper/noresults.html.twig', {
+            'header'  : 'mautic.whatsapp.templates.none',
+            'message' : 'mautic.whatsapp.templates.none.message'
+        }) -}}
+    {% endif %}
+</div>
+{% endblock %}

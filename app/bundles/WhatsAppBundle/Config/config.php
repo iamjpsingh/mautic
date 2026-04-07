@@ -61,6 +61,10 @@ return [
                 'path'       => '/whatsapp/{page}',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::indexAction',
             ],
+            'mautic_whatsapp_templates' => [
+                'path'       => '/whatsapp/templates/{page}',
+                'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::templatesAction',
+            ],
             'mautic_whatsapp_action' => [
                 'path'       => '/whatsapp/{objectAction}/{objectId}',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::executeAction',
@@ -109,6 +113,12 @@ return [
                     'access' => ['whatsapp:messages:viewown', 'whatsapp:messages:viewother'],
                     'parent' => 'mautic.core.channels',
                     'priority' => 65,
+                ],
+                'mautic.whatsapp.templates.menu' => [
+                    'route'  => 'mautic_whatsapp_templates',
+                    'access' => ['whatsapp:messages:viewown', 'whatsapp:messages:viewother'],
+                    'parent' => 'mautic.core.channels',
+                    'priority' => 64,
                 ],
             ],
         ],

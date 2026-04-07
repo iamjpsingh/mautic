@@ -23,6 +23,71 @@
 
 <!-- Template message section -->
 <div id="whatsapp-template-section"{% if messageType != 'template' %} class="hide"{% endif %}>
+    <hr />
+    <h4 class="mb-md">
+        <i class="ri-file-text-line"></i>
+        {{ 'mautic.whatsapp.template.section.title'|trans }}
+    </h4>
+
+    <div class="row">
+        <div class="col-md-8">
+            {{ form_row(form.templateId) }}
+        </div>
+        <div class="col-md-4 pt-lg">
+            <a class="btn btn-default btn-nospin" onclick="Mautic.whatsappSyncTemplates();">
+                <i class="ri-refresh-line"></i>
+                {{ 'mautic.whatsapp.template.sync'|trans }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Template preview box -->
+    <div id="whatsapp-template-preview" class="panel panel-default hide">
+        <div class="panel-heading">
+            <h5 class="panel-title">{{ 'mautic.whatsapp.template.preview'|trans }}</h5>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>{{ 'mautic.whatsapp.form.template_name'|trans }}:</strong>
+                    <span id="whatsapp-preview-name">—</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ 'mautic.whatsapp.template.category'|trans }}:</strong>
+                    <span id="whatsapp-preview-category" class="label label-default">—</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ 'mautic.whatsapp.form.template_language'|trans }}:</strong>
+                    <span id="whatsapp-preview-language">—</span>
+                </div>
+            </div>
+            <hr />
+            <div id="whatsapp-preview-header" class="hide">
+                <strong>{{ 'mautic.whatsapp.template.header'|trans }}:</strong>
+                <div id="whatsapp-preview-header-text" class="well well-sm"></div>
+            </div>
+            <div id="whatsapp-preview-body-section">
+                <strong>{{ 'mautic.whatsapp.template.body'|trans }}:</strong>
+                <div id="whatsapp-preview-body" class="well well-sm" style="white-space:pre-wrap;"></div>
+            </div>
+            <div id="whatsapp-preview-footer" class="hide">
+                <strong>{{ 'mautic.whatsapp.template.footer'|trans }}:</strong>
+                <div id="whatsapp-preview-footer-text" class="text-muted"></div>
+            </div>
+            <div id="whatsapp-preview-buttons" class="hide">
+                <strong>{{ 'mautic.whatsapp.template.buttons'|trans }}:</strong>
+                <div id="whatsapp-preview-buttons-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template variables section -->
+    <div id="whatsapp-template-variables" class="hide">
+        <h5>{{ 'mautic.whatsapp.template.variables'|trans }}</h5>
+        <p class="text-muted small">{{ 'mautic.whatsapp.template.variables.hint'|trans }}</p>
+        <div id="whatsapp-template-variables-list"></div>
+    </div>
+
     <div class="row">
         <div class="col-md-6">
             {{ form_row(form.templateName) }}
@@ -41,12 +106,18 @@
 
 <!-- Session message section -->
 <div id="whatsapp-session-section"{% if messageType != 'session' %} class="hide"{% endif %}>
+    <hr />
+    <h4 class="mb-md">
+        <i class="ri-chat-1-line"></i>
+        {{ 'mautic.whatsapp.session.section.title'|trans }}
+    </h4>
     <div class="row">
         <div class="col-md-12">
-            <div class="characters-count">
+            <div class="characters-count pull-right">
                 <label class="control-label" for="" data-toggle="tooltip" data-container="body" data-placement="top" title="" data-original-title="{{ 'mautic.whatsapp.form.nbcharacter.infobox'|trans }}">
                     {{ 'mautic.whatsapp.form.nbcharacter.counter'|trans }}
                     <span size="sm" class="label label-gray" id="whatsapp_nb_char">0</span>
+                    <span class="text-muted small">/ 4096</span>
                 </label>
             </div>
             {{ form_row(form.message) }}
@@ -57,18 +128,35 @@
 
 <!-- Media message section -->
 <div id="whatsapp-media-section"{% if messageType != 'media' %} class="hide"{% endif %}>
+    <hr />
+    <h4 class="mb-md">
+        <i class="ri-image-line"></i>
+        {{ 'mautic.whatsapp.media.section.title'|trans }}
+    </h4>
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             {{ form_row(form.mediaType) }}
         </div>
-        <div class="col-md-6">
+        <div class="col-md-8">
             {{ form_row(form.mediaUrl) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div id="whatsapp-media-preview" class="hide text-center pa-md">
+                <img id="whatsapp-media-preview-img" src="" alt="Media preview" class="img-responsive img-thumbnail" style="max-height:200px;" />
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Interactive message section -->
 <div id="whatsapp-interactive-section"{% if messageType != 'interactive' %} class="hide"{% endif %}>
+    <hr />
+    <h4 class="mb-md">
+        <i class="ri-list-settings-line"></i>
+        {{ 'mautic.whatsapp.interactive.section.title'|trans }}
+    </h4>
     <div class="row">
         <div class="col-md-6">
             {{ form_row(form.interactiveType) }}
@@ -94,7 +182,7 @@
     }
 }) }}
 
-<div id="leadList"{% if 'template' == messageType %} class="hide"{% endif %}>
+<div id="leadList">
     {{ form_row(form.lists) }}
     {{ form_row(form.publishUp, {'label': 'mautic.core.form.sending.start_at'}) }}
     {{ form_row(form.publishDown, {'label': 'mautic.core.form.sending.stop_at'}) }}

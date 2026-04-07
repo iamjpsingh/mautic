@@ -12,6 +12,7 @@ use Mautic\CoreBundle\Helper\InputHelper;
 use Mautic\CoreBundle\Model\AuditLogModel;
 use Mautic\LeadBundle\Controller\EntityContactsTrait;
 use Mautic\WhatsAppBundle\Entity\WhatsAppMessage;
+use Mautic\WhatsAppBundle\Entity\WhatsAppTemplateRepository;
 use Mautic\WhatsAppBundle\Model\WhatsAppModel;
 use Mautic\WhatsAppBundle\WhatsApp\TransportChain;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -738,6 +739,33 @@ class WhatsAppController extends FormController
             'whatsapp_message',
             'whatsapp_message_id'
         );
+    }
+
+    /**
+     * Display the list of synced WhatsApp templates.
+     *
+     * @return JsonResponse|Response
+     */
+    public function templatesAction(WhatsAppTemplateRepository $templateRepository, int $page = 1): JsonResponse|Response
+    {
+        if (!$this->security->isGranted('whatsapp:messages:viewown') && !$this->security->isGranted('whatsapp:messages:viewother')) {
+            return $this->accessDenied();
+        }
+
+        $templates = $templateRepository->findBy([], ['name' => 'ASC']);
+
+        return $this->delegateView([
+            'viewParameters' => [
+                'templates' => $templates,
+                'page'      => $page,
+            ],
+            'contentTemplate' => '@MauticWhatsApp/WhatsApp/templates.html.twig',
+            'passthroughVars' => [
+                'activeLink'    => '#mautic_whatsapp_templates',
+                'mauticContent' => 'whatsapp_templates',
+                'route'         => $this->generateUrl('mautic_whatsapp_templates', ['page' => $page]),
+            ],
+        ]);
     }
 
     protected function getModelName(): string
