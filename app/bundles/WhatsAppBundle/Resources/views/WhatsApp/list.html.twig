@@ -111,6 +111,16 @@
                     '@MauticCore/Helper/tableheader.html.twig',
                     {
                         'sessionVar' : 'whatsapp',
+                        'orderBy'    : 'e.dateAdded',
+                        'text'       : 'mautic.core.date.added',
+                        'class'      : 'visible-md visible-lg col-whatsapp-date',
+                    }
+                ) -}}
+
+                {{- include(
+                    '@MauticCore/Helper/tableheader.html.twig',
+                    {
+                        'sessionVar' : 'whatsapp',
                         'orderBy'    : 'e.id',
                         'text'       : 'mautic.core.id',
                         'class'      : 'visible-md visible-lg col-whatsapp-id',
@@ -221,6 +231,9 @@
                               title="{{ 'mautic.whatsapp.stat.read.tooltip'|trans }}">
                             {{ 'mautic.whatsapp.stat.readcount'|trans({'%count%' : item.getReadCount()}) }}
                         </span>
+                    </td>
+                    <td class="visible-md visible-lg">
+                        {{ item.getDateAdded() ? item.getDateAdded()|date('Y-m-d H:i') : '' }}
                     </td>
                     <td class="visible-md visible-lg">{{ item.getId() }}</td>
                 </tr>

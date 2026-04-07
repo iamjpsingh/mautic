@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Mautic\WhatsAppBundle\Form\Type;
 
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Mautic\CategoryBundle\Form\Type\CategoryListType;
 use Mautic\CoreBundle\Form\DataTransformer\IdToEntityModelTransformer;
 use Mautic\CoreBundle\Form\EventListener\CleanFormSubscriber;
@@ -16,6 +16,7 @@ use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Form\Type\LeadListType;
 use Mautic\WhatsAppBundle\Entity\WhatsAppMessage;
+use Mautic\WhatsAppBundle\Entity\WhatsAppTemplate;
 use Mautic\WhatsAppBundle\Entity\WhatsAppTemplateRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -32,8 +33,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class WhatsAppType extends AbstractType
 {
     public function __construct(
-        private readonly EntityManager $em,
-        private readonly WhatsAppTemplateRepository $templateRepository,
+        private readonly EntityManagerInterface $em,
     ) {
     }
 
@@ -296,8 +296,10 @@ class WhatsAppType extends AbstractType
      */
     private function buildTemplateChoices(): array
     {
-        $templates = $this->templateRepository->findApproved();
-        $choices   = [];
+        /** @var WhatsAppTemplateRepository $repository */
+        $repository = $this->em->getRepository(WhatsAppTemplate::class);
+        $templates  = $repository->findApproved();
+        $choices    = [];
 
         foreach ($templates as $template) {
             $label = sprintf(

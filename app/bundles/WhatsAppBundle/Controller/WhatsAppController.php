@@ -14,6 +14,7 @@ use Mautic\LeadBundle\Controller\EntityContactsTrait;
 use Mautic\WhatsAppBundle\Entity\WhatsAppMessage;
 use Mautic\WhatsAppBundle\Entity\WhatsAppTemplateRepository;
 use Mautic\WhatsAppBundle\Model\WhatsAppModel;
+use Mautic\WhatsAppBundle\Service\TemplateSyncService;
 use Mautic\WhatsAppBundle\WhatsApp\TransportChain;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -766,6 +767,33 @@ class WhatsAppController extends FormController
                 'route'         => $this->generateUrl('mautic_whatsapp_templates', ['page' => $page]),
             ],
         ]);
+    }
+
+    /**
+     * Sync WhatsApp templates from Meta and redirect back to templates page.
+     */
+    public function syncTemplatesAction(TemplateSyncService $syncService): Response
+    {
+        if (!$this->security->isGranted('whatsapp:messages:create')) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $results = $syncService->syncTemplates();
+
+            $this->addFlashMessage(
+                'mautic.whatsapp.command.sync_templates.synced',
+                ['%count%' => $results['synced']]
+            );
+        } catch (\RuntimeException $e) {
+            $this->addFlashMessage(
+                'mautic.whatsapp.command.sync_templates.error',
+                ['%error%' => $e->getMessage()],
+                'error'
+            );
+        }
+
+        return $this->redirectToRoute('mautic_whatsapp_templates');
     }
 
     protected function getModelName(): string
