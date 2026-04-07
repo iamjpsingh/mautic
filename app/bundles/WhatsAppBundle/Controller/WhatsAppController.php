@@ -278,6 +278,18 @@ class WhatsAppController extends FormController
         if ('POST' == $method) {
             $valid = false;
             if (!$cancelled = $this->isFormCancelled($form)) {
+                // Auto-fill templateName and templateLanguage from selected template
+                $templateId = $form->has('templateId') ? $form->get('templateId')->getData() : null;
+                if ($templateId && 'template' === $entity->getMessageType() && empty($entity->getTemplateName())) {
+                    $whatsAppTemplate = $this->getDoctrine()->getManager()
+                        ->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
+                        ->find($templateId);
+                    if ($whatsAppTemplate) {
+                        $entity->setTemplateName($whatsAppTemplate->getName());
+                        $entity->setTemplateLanguage($whatsAppTemplate->getLanguage());
+                        $entity->setTemplateComponents($whatsAppTemplate->getComponents() ?? []);
+                    }
+                }
                 if ($valid = $this->isFormValid($form)) {
                     // form is valid so process the data
                     $model->saveEntity($entity);
