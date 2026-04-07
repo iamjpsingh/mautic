@@ -127,6 +127,7 @@ class WhatsAppType extends AbstractType
             [
                 'label'    => 'mautic.whatsapp.form.template_components',
                 'required' => false,
+                'empty_data' => '[]',
                 'attr'     => [
                     'class' => 'form-control whatsapp-template-components',
                 ],

@@ -432,12 +432,16 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
     }
 
     /**
-     * @param array<string, mixed> $templateComponents
+     * @param array<string, mixed>|string|null $templateComponents
      */
-    public function setTemplateComponents(?array $templateComponents): self
+    public function setTemplateComponents(mixed $templateComponents = null): self
     {
-        $this->isChanged('templateComponents', $templateComponents ?? []);
-        $this->templateComponents = $templateComponents ?? [];
+        if (is_string($templateComponents)) {
+            $templateComponents = json_decode($templateComponents, true) ?: [];
+        }
+        $templateComponents = is_array($templateComponents) ? $templateComponents : [];
+        $this->isChanged('templateComponents', $templateComponents);
+        $this->templateComponents = $templateComponents;
 
         return $this;
     }
@@ -492,10 +496,17 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
     /**
      * @param array<string, mixed> $interactiveData
      */
-    public function setInteractiveData(?array $interactiveData): self
+    /**
+     * @param array<string, mixed>|string|null $interactiveData
+     */
+    public function setInteractiveData(mixed $interactiveData = null): self
     {
-        $this->isChanged('interactiveData', $interactiveData ?? []);
-        $this->interactiveData = $interactiveData ?? [];
+        if (is_string($interactiveData)) {
+            $interactiveData = json_decode($interactiveData, true) ?: [];
+        }
+        $interactiveData = is_array($interactiveData) ? $interactiveData : [];
+        $this->isChanged('interactiveData', $interactiveData);
+        $this->interactiveData = $interactiveData;
 
         return $this;
     }
