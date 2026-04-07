@@ -83,7 +83,6 @@ class WhatsAppType extends AbstractType
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
                     'class'    => 'form-control',
-                    'onchange' => 'Mautic.whatsappTemplateSelected(this)',
                 ],
                 'choices'     => $templateChoices,
                 'required'    => false,
