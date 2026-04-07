@@ -320,6 +320,15 @@ class WhatsAppController extends FormController
                         // return edit view so that all the session stuff is loaded
                         return $this->editAction($request, $entity->getId(), true);
                     }
+                } else {
+                    // Form is NOT valid — log errors and re-render form
+                    $formErrors = [];
+                    foreach ($form->getErrors(true) as $error) {
+                        $formErrors[] = $error->getMessage();
+                    }
+                    if (!empty($formErrors)) {
+                        $this->addFlashMessage('Form errors: ' . implode(', ', $formErrors), [], 'error', false);
+                    }
                 }
             } else {
                 $viewParameters = ['page' => $page];
