@@ -70,15 +70,10 @@
       <div id="whatsapp-template-variables-list"></div>
     </div>
 
-    <div class="row">
-      <div class="col-md-6">{{ form_row(form.templateName) }}</div>
-      <div class="col-md-6">{{ form_row(form.templateLanguage) }}</div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        {{ form_row(form.templateComponents) }}
-        <i class="text-secondary">{{ 'mautic.whatsapp.template.components.hint'|trans|purify }}</i>
-      </div>
+    <div class="hide">
+      {{ form_row(form.templateName) }}
+      {{ form_row(form.templateLanguage) }}
+      {{ form_row(form.templateComponents) }}
     </div>
   </div>
 

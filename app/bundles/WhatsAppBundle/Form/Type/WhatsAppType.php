@@ -102,7 +102,6 @@ class WhatsAppType extends AbstractType
                 'attr'       => [
                     'class'    => 'form-control',
                     'tooltip'  => 'mautic.whatsapp.form.template_name.help',
-                    'readonly' => 'readonly',
                 ],
                 'required' => false,
             ]
@@ -117,7 +116,6 @@ class WhatsAppType extends AbstractType
                 'attr'       => [
                     'class'       => 'form-control',
                     'placeholder' => 'en_US',
-                    'readonly'    => 'readonly',
                 ],
                 'required' => false,
             ]
