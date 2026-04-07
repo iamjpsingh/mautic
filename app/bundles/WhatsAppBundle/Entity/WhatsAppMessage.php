@@ -56,7 +56,7 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
     /**
      * @var array<string, mixed>
      */
-    private array $templateComponents = [];
+    private ?array $templateComponents = [];
 
     private ?string $mediaUrl = null;
 
@@ -67,7 +67,7 @@ class WhatsAppMessage extends FormEntity implements UuidInterface
     /**
      * @var array<string, mixed>
      */
-    private array $interactiveData = [];
+    private ?array $interactiveData = [];
 
     private int $sentCount = 0;
 
