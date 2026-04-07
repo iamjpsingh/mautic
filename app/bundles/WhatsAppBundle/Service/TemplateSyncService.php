@@ -16,7 +16,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class TemplateSyncService
 {
-    private const API_VERSION = 'v21.0';
+    private const API_VERSION = 'v22.0';
 
     private const BASE_URL = 'https://graph.facebook.com';
 
