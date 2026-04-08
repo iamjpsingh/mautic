@@ -826,7 +826,58 @@ class WhatsAppController extends FormController
     }
 
     /**
-     * Send a WhatsApp message to a specific contact.
+     * Send WhatsApp message to all contacts in the assigned segment.
+     */
+    public function sendAction(Request $request, $objectId): Response
+    {
+        /** @var WhatsAppModel $model */
+        $model = $this->getModel('whatsapp');
+
+        /** @var WhatsAppMessage $message */
+        $message = $model->getEntity($objectId);
+
+        if (null === $message) {
+            $this->addFlashMessage('mautic.whatsapp.error.notfound', ['%id%' => $objectId], 'error');
+            return $this->redirectToRoute('mautic_whatsapp_index');
+        }
+
+        $lists = $message->getLists();
+        if ($lists->count() === 0) {
+            $this->addFlashMessage('No segments assigned to this message. Edit the message and add a segment first.', [], 'error', false);
+            return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
+        }
+
+        $sentCount = 0;
+        $failCount = 0;
+
+        foreach ($lists as $list) {
+            $contacts = $this->getModel('lead')->getEntities([
+                'filter' => ['force' => [['column' => 'l.id', 'expr' => 'in', 'value' => $list->getId()]]],
+            ]);
+
+            foreach ($contacts as $contact) {
+                $result = $model->sendWhatsApp($message, $contact, ['channel' => ['whatsapp.message', $message->getId()]]);
+                $contactResult = $result[$contact->getId()] ?? null;
+                if ($contactResult && !empty($contactResult['sent'])) {
+                    ++$sentCount;
+                } else {
+                    ++$failCount;
+                }
+            }
+        }
+
+        $this->addFlashMessage(
+            "WhatsApp broadcast complete: {$sentCount} sent, {$failCount} failed",
+            [],
+            'notice',
+            false
+        );
+
+        return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
+    }
+
+    /**
+     * Send a WhatsApp message to a specific contact (test send).
      */
     public function sendTestAction(Request $request, TransportChain $transportChain, $objectId): Response
     {
