@@ -282,9 +282,7 @@ class WhatsAppController extends FormController
                     // Auto-fill templateName from selected template AFTER validation
                     $templateId = $form->has('templateId') ? $form->get('templateId')->getData() : null;
                     if ($templateId) {
-                        $em = $this->container->get('doctrine.orm.entity_manager');
-                        $whatsAppTemplate = $em->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
-                            ->find($templateId);
+                        $whatsAppTemplate = $model->findTemplate((int) $templateId);
                         if ($whatsAppTemplate) {
                             $entity->setTemplateName($whatsAppTemplate->getName());
                             $entity->setTemplateLanguage($whatsAppTemplate->getLanguage());
@@ -464,9 +462,7 @@ class WhatsAppController extends FormController
                     // Auto-fill templateName from selected template AFTER validation
                     $templateId = $form->has('templateId') ? $form->get('templateId')->getData() : null;
                     if ($templateId) {
-                        $em = $this->container->get('doctrine.orm.entity_manager');
-                        $whatsAppTemplate = $em->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
-                            ->find($templateId);
+                        $whatsAppTemplate = $model->findTemplate((int) $templateId);
                         if ($whatsAppTemplate) {
                             $entity->setTemplateName($whatsAppTemplate->getName());
                             $entity->setTemplateLanguage($whatsAppTemplate->getLanguage());

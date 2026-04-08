@@ -16,6 +16,7 @@ use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\CoreBundle\Model\AjaxLookupModelInterface;
 use Mautic\CoreBundle\Model\FormModel;
+use Mautic\WhatsAppBundle\Entity\WhatsAppTemplate;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
 use Mautic\LeadBundle\Entity\DoNotContact;
@@ -73,6 +74,11 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
     public function getStatRepository(): WhatsAppStatRepository
     {
         return $this->em->getRepository(WhatsAppStat::class);
+    }
+
+    public function findTemplate(int $templateId): ?WhatsAppTemplate
+    {
+        return $this->em->getRepository(WhatsAppTemplate::class)->find($templateId);
     }
 
     public function getPermissionBase(): string
