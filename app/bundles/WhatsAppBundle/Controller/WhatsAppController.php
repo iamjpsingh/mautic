@@ -850,24 +850,34 @@ class WhatsAppController extends FormController
         $sentCount = 0;
         $failCount = 0;
 
-        foreach ($lists as $list) {
-            $contacts = $this->getModel('lead')->getEntities([
-                'filter' => ['force' => [['column' => 'l.id', 'expr' => 'in', 'value' => $list->getId()]]],
-            ]);
+        /** @var \Mautic\LeadBundle\Model\ListModel $listModel */
+        $listModel = $this->getModel('lead.list');
 
-            foreach ($contacts as $contact) {
-                $result = $model->sendWhatsApp($message, $contact, ['channel' => ['whatsapp.message', $message->getId()]]);
-                $contactResult = $result[$contact->getId()] ?? null;
-                if ($contactResult && !empty($contactResult['sent'])) {
-                    ++$sentCount;
-                } else {
+        foreach ($lists as $list) {
+            $contacts = $listModel->getLeadsByList(['id' => $list->getId()], true);
+            $contactIds = $contacts[$list->getId()] ?? [];
+
+            foreach ($contactIds as $contactId) {
+                $contact = $this->getModel('lead')->getEntity($contactId);
+                if (!$contact || !$contact->getPhone()) {
+                    continue;
+                }
+                try {
+                    $result = $model->sendWhatsApp($message, $contact, ['channel' => ['whatsapp.message', $message->getId()]]);
+                    $contactResult = $result[$contact->getId()] ?? null;
+                    if ($contactResult && !empty($contactResult['sent'])) {
+                        ++$sentCount;
+                    } else {
+                        ++$failCount;
+                    }
+                } catch (\Exception $e) {
                     ++$failCount;
                 }
             }
         }
 
         $this->addFlashMessage(
-            "WhatsApp broadcast complete: {$sentCount} sent, {$failCount} failed",
+            "WhatsApp broadcast: {$sentCount} sent, {$failCount} failed",
             [],
             'notice',
             false

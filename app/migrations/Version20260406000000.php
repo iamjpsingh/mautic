@@ -84,8 +84,8 @@ final class Version20260406000000 extends PreUpAssertionMigration
     `created_by_user`      VARCHAR(255) DEFAULT NULL,
     `modified_by`          INT DEFAULT NULL,
     `modified_by_user`     VARCHAR(255) DEFAULT NULL,
-    `checked_out`          INT DEFAULT NULL,
-    `checked_out_by`       VARCHAR(255) DEFAULT NULL,
+    `checked_out`          DATETIME DEFAULT NULL,
+    `checked_out_by`       INT DEFAULT NULL,
     `checked_out_by_user`  VARCHAR(255) DEFAULT NULL,
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4
