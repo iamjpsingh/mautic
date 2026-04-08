@@ -282,8 +282,8 @@ class WhatsAppController extends FormController
                     // Auto-fill templateName from selected template AFTER validation
                     $templateId = $form->has('templateId') ? $form->get('templateId')->getData() : null;
                     if ($templateId) {
-                        $whatsAppTemplate = $model->getEntityManager()
-                            ->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
+                        $em = $this->container->get('doctrine.orm.entity_manager');
+                        $whatsAppTemplate = $em->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
                             ->find($templateId);
                         if ($whatsAppTemplate) {
                             $entity->setTemplateName($whatsAppTemplate->getName());
@@ -464,8 +464,8 @@ class WhatsAppController extends FormController
                     // Auto-fill templateName from selected template AFTER validation
                     $templateId = $form->has('templateId') ? $form->get('templateId')->getData() : null;
                     if ($templateId) {
-                        $whatsAppTemplate = $model->getEntityManager()
-                            ->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
+                        $em = $this->container->get('doctrine.orm.entity_manager');
+                        $whatsAppTemplate = $em->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
                             ->find($templateId);
                         if ($whatsAppTemplate) {
                             $entity->setTemplateName($whatsAppTemplate->getName());
