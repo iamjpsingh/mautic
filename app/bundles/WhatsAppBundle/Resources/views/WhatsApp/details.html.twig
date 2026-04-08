@@ -25,7 +25,17 @@
 {% endblock %}
 
 {% block actions %}
-    {% set customButtons = [] %}
+    {% set customButtons = [
+        {
+            'attr': {
+                'href': path('mautic_whatsapp_action', {'objectAction': 'sendTest', 'objectId': whatsapp.getId()}),
+                'data-toggle': '',
+            },
+            'iconClass': 'ri-send-plane-line',
+            'btnText': 'Send Test',
+            'priority': 500,
+        }
+    ] %}
     {{- include('@MauticCore/Helper/page_actions.html.twig',
         {
             'item'            : whatsapp,

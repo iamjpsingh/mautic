@@ -825,6 +825,68 @@ class WhatsAppController extends FormController
         return $this->redirectToRoute('mautic_whatsapp_templates');
     }
 
+    /**
+     * Send a WhatsApp message to a specific contact.
+     */
+    public function sendTestAction(Request $request, TransportChain $transportChain, $objectId): Response
+    {
+        /** @var WhatsAppModel $model */
+        $model = $this->getModel('whatsapp');
+
+        /** @var WhatsAppMessage $message */
+        $message = $model->getEntity($objectId);
+
+        if (null === $message) {
+            $this->addFlashMessage('mautic.whatsapp.error.notfound', ['%id%' => $objectId], 'error');
+            return $this->redirectToRoute('mautic_whatsapp_index');
+        }
+
+        // Get contact ID from request
+        $contactId = $request->query->get('contactId') ?: $request->request->get('contactId');
+
+        if (!$contactId) {
+            // Send to the first contact with a phone number
+            $leads = $model->getRepository()->getEntityManager()
+                ->createQuery('SELECT l FROM Mautic\LeadBundle\Entity\Lead l WHERE l.phone IS NOT NULL')
+                ->setMaxResults(1)
+                ->getResult();
+
+            if (empty($leads)) {
+                $this->addFlashMessage('No contacts with phone numbers found', [], 'error', false);
+                return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
+            }
+            $contact = $leads[0];
+        } else {
+            $contact = $this->getModel('lead')->getEntity($contactId);
+        }
+
+        if (!$contact) {
+            $this->addFlashMessage('Contact not found', [], 'error', false);
+            return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
+        }
+
+        try {
+            $result = $model->sendWhatsApp($message, $contact, ['channel' => ['whatsapp.message', $message->getId()]]);
+            $contactResult = $result[$contact->getId()] ?? null;
+
+            if ($contactResult && !empty($contactResult['sent'])) {
+                $this->addFlashMessage(
+                    'WhatsApp message sent to ' . ($contact->getPhone() ?: $contact->getMobile()),
+                    [],
+                    'notice',
+                    false
+                );
+            } else {
+                $status = $contactResult['status'] ?? 'Unknown error';
+                $this->addFlashMessage('Send failed: ' . $status, [], 'error', false);
+            }
+        } catch (\Exception $e) {
+            $this->addFlashMessage('Send error: ' . $e->getMessage(), [], 'error', false);
+        }
+
+        return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
+    }
+
     protected function getModelName(): string
     {
         return 'whatsapp';
