@@ -221,11 +221,6 @@
                     </a>
                 </li>
                 <li class="">
-                    <a href="#read-receipts-container" role="tab" data-toggle="tab">
-                        {{ 'mautic.whatsapp.tab.read_receipts'|trans }}
-                    </a>
-                </li>
-                <li class="">
                     <a href="#contacts-container" role="tab" data-toggle="tab">
                         {{ 'mautic.lead.leads'|trans }}
                     </a>
@@ -267,51 +262,6 @@
                                 <td>{{ 0 }}</td>
                                 <td>{{ whatsapp.sentCount > 0 ? ((0 / whatsapp.sentCount) * 100)|number_format(1) ~ '%' : '0%' }}</td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="tab-pane fade in bdr-w-0" id="read-receipts-container">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>{{ 'mautic.lead.lead.contact'|trans }}</th>
-                                <th>{{ 'mautic.whatsapp.stat.sent_at'|trans }}</th>
-                                <th>{{ 'mautic.whatsapp.stat.delivered_at'|trans }}</th>
-                                <th>{{ 'mautic.whatsapp.stat.read_at'|trans }}</th>
-                                <th>{{ 'mautic.whatsapp.stat.status'|trans }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if readReceipts is defined and readReceipts|length > 0 %}
-                                {% for receipt in readReceipts %}
-                                    <tr>
-                                        <td>
-                                            <a href="{{ path('mautic_contact_action', {'objectAction': 'view', 'objectId': receipt.lead.getId()}) }}" data-toggle="ajax">
-                                                {{ receipt.lead.getName() }}
-                                            </a>
-                                        </td>
-                                        <td>{{ receipt.dateSent|date('Y-m-d H:i:s') }}</td>
-                                        <td>{{ receipt.dateDelivered is not null ? receipt.dateDelivered|date('Y-m-d H:i:s') : '-' }}</td>
-                                        <td>{{ receipt.dateRead is not null ? receipt.dateRead|date('Y-m-d H:i:s') : '-' }}</td>
-                                        <td>
-                                            {% if receipt.dateRead is not null %}
-                                                <span class="label label-success">{{ 'mautic.whatsapp.status.read'|trans }}</span>
-                                            {% elseif receipt.dateDelivered is not null %}
-                                                <span class="label label-info">{{ 'mautic.whatsapp.status.delivered'|trans }}</span>
-                                            {% else %}
-                                                <span class="label label-default">{{ 'mautic.whatsapp.status.sent'|trans }}</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="5" class="text-center">{{ 'mautic.whatsapp.no_read_receipts'|trans }}</td>
-                                </tr>
-                            {% endif %}
                         </tbody>
                     </table>
                 </div>

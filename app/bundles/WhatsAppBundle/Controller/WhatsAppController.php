@@ -350,7 +350,7 @@ class WhatsAppController extends FormController
                         'updateSelect' => $form['updateSelect']->getData(),
                         'id'           => $entity->getId(),
                         'name'         => $entity->getName(),
-                        'group'        => $entity->getLang(),
+                        'group'        => $entity->getTemplateLanguage(),
                     ]
                 );
             }
@@ -511,7 +511,7 @@ class WhatsAppController extends FormController
                         'updateSelect' => $form['updateSelect']->getData(),
                         'id'           => $entity->getId(),
                         'name'         => $entity->getName(),
-                        'group'        => $entity->getLang(),
+                        'group'        => $entity->getTemplateLanguage(),
                     ]
                 );
             }
