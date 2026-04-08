@@ -3,6 +3,7 @@
 {% endif %}
 
 {% block mauticContent %}whatsapp{% endblock %}
+{% set whatsapp = message|default(item|default(null)) %}
 {% block headerTitle %}{{ whatsapp.getName() }}{% endblock %}
 
 {% block preHeader %}
