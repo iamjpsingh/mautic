@@ -280,7 +280,7 @@ class WhatsAppController extends FormController
             if (!$cancelled = $this->isFormCancelled($form)) {
                 // Auto-fill templateName and templateLanguage from selected template
                 $templateId = $form->has('templateId') ? $form->get('templateId')->getData() : null;
-                if ($templateId && 'template' === $entity->getMessageType() && empty($entity->getTemplateName())) {
+                if ($templateId) {
                     $whatsAppTemplate = $this->getDoctrine()->getManager()
                         ->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
                         ->find($templateId);
@@ -462,7 +462,7 @@ class WhatsAppController extends FormController
             if (!$cancelled = $this->isFormCancelled($form)) {
                 // Auto-fill templateName and templateLanguage from selected template
                 $templateId = $form->has('templateId') ? $form->get('templateId')->getData() : null;
-                if ($templateId && 'template' === $entity->getMessageType() && empty($entity->getTemplateName())) {
+                if ($templateId) {
                     $whatsAppTemplate = $this->getDoctrine()->getManager()
                         ->getRepository(\Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class)
                         ->find($templateId);
