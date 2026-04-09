@@ -276,6 +276,28 @@
                         <strong>{{ 'mautic.whatsapp.template.name'|trans }}:</strong> {{ whatsapp.getTemplateName() }}<br>
                         <strong>{{ 'mautic.whatsapp.template.language'|trans }}:</strong> {{ whatsapp.getTemplateLanguage() }}
                     </div>
+                    {% if templateHeader is defined and templateHeader %}
+                        <div class="pa-sm mb-xs" style="font-weight: bold; font-size: 14px;">
+                            {{ templateHeader }}
+                        </div>
+                    {% endif %}
+                    {% if templateBody is defined and templateBody %}
+                        <div class="whatsapp-message-preview pa-sm mb-xs" style="background-color: #dcf8c6; border-radius: 8px;">
+                            {{ templateBody|nl2br }}
+                        </div>
+                    {% endif %}
+                    {% if templateFooter is defined and templateFooter %}
+                        <div class="pa-sm mb-xs text-muted" style="font-size: 12px;">
+                            {{ templateFooter }}
+                        </div>
+                    {% endif %}
+                    {% if templateButtons is defined and templateButtons %}
+                        <div class="pa-sm">
+                            {% for button in templateButtons %}
+                                <span class="label label-default mr-xs">{{ button.text|default('Button') }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 {% elseif 'media' == messageType %}
                     <div class="well well-sm">
                         <strong>{{ 'mautic.whatsapp.media.type'|trans }}:</strong> {{ whatsapp.getMediaType() }}<br>

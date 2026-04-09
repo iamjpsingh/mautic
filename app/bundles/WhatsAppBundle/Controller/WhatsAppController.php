@@ -12,6 +12,7 @@ use Mautic\CoreBundle\Helper\InputHelper;
 use Mautic\CoreBundle\Model\AuditLogModel;
 use Mautic\LeadBundle\Controller\EntityContactsTrait;
 use Mautic\WhatsAppBundle\Entity\WhatsAppMessage;
+use Mautic\WhatsAppBundle\Entity\WhatsAppTemplate;
 use Mautic\WhatsAppBundle\Entity\WhatsAppTemplateRepository;
 use Mautic\WhatsAppBundle\Model\WhatsAppModel;
 use Mautic\WhatsAppBundle\Service\TemplateSyncService;
@@ -186,6 +187,47 @@ class WhatsAppController extends FormController
         \assert($auditLogModel instanceof AuditLogModel);
         $logs = $auditLogModel->getLogForObject('whatsapp', $message->getId(), $message->getDateAdded());
 
+        // Load synced template data for the preview sidebar
+        $templateBody    = null;
+        $templateHeader  = null;
+        $templateFooter  = null;
+        $templateButtons = null;
+
+        if ('template' === $message->getMessageType() && $message->getTemplateName()) {
+            /** @var WhatsAppTemplateRepository $templateRepo */
+            $templateRepo = $model->getRepository()->getEntityManager()->getRepository(WhatsAppTemplate::class);
+            $templates    = $templateRepo->findByName($message->getTemplateName());
+
+            // Match by language if possible, otherwise take the first result
+            $matchedTemplate = null;
+            foreach ($templates as $tpl) {
+                if ($tpl->getLanguage() === $message->getTemplateLanguage()) {
+                    $matchedTemplate = $tpl;
+                    break;
+                }
+            }
+            if (null === $matchedTemplate && !empty($templates)) {
+                $matchedTemplate = $templates[0];
+            }
+
+            if (null !== $matchedTemplate && is_array($matchedTemplate->getComponents())) {
+                foreach ($matchedTemplate->getComponents() as $component) {
+                    $type = strtolower($component['type'] ?? '');
+                    $text = $component['text'] ?? null;
+
+                    if ('body' === $type) {
+                        $templateBody = $text;
+                    } elseif ('header' === $type) {
+                        $templateHeader = $text;
+                    } elseif ('footer' === $type) {
+                        $templateFooter = $text;
+                    } elseif ('buttons' === $type) {
+                        $templateButtons = $component['buttons'] ?? null;
+                    }
+                }
+            }
+        }
+
         // Init the date range filter form
         $dateRangeValues = $request->query->all()['daterange'] ?? $request->request->all()['daterange'] ?? [];
         $action          = $this->generateUrl('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
@@ -225,7 +267,11 @@ class WhatsAppController extends FormController
                         'ignoreAjax' => true,
                     ]
                 )->getContent(),
-                'dateRangeForm' => $dateRangeForm->createView(),
+                'dateRangeForm'    => $dateRangeForm->createView(),
+                'templateBody'     => $templateBody,
+                'templateHeader'   => $templateHeader,
+                'templateFooter'   => $templateFooter,
+                'templateButtons'  => $templateButtons,
             ],
             'contentTemplate' => '@MauticWhatsApp/WhatsApp/details.html.twig',
             'passthroughVars' => [
@@ -771,10 +817,13 @@ class WhatsAppController extends FormController
             $pageHelperFactory,
             $objectId,
             $page,
-            'whatsapp:messages:view',
+            [
+                'whatsapp:messages:viewown',
+                'whatsapp:messages:viewother',
+            ],
             'whatsapp',
             'whatsapp_message_stats',
-            'whatsapp_message',
+            'whatsapp',
             'whatsapp_message_id'
         );
     }

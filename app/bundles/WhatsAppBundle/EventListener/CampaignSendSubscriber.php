@@ -40,8 +40,8 @@ class CampaignSendSubscriber implements EventSubscriberInterface
         $event->addAction(
             'whatsapp.send_template',
             [
-                'label'            => 'mautic.campaign.whatsapp.send_template',
-                'description'      => 'mautic.campaign.whatsapp.send_template.tooltip',
+                'label'            => 'mautic.whatsapp.campaign.send_template',
+                'description'      => 'mautic.whatsapp.campaign.send_template.tooltip',
                 'eventName'        => WhatsAppEvents::ON_CAMPAIGN_TRIGGER_ACTION_TEMPLATE,
                 'formType'         => WhatsAppTemplateSendType::class,
                 'formTypeOptions'  => ['update_select' => 'campaignevent_properties_whatsapp'],
@@ -54,8 +54,8 @@ class CampaignSendSubscriber implements EventSubscriberInterface
         $event->addAction(
             'whatsapp.send_message',
             [
-                'label'            => 'mautic.campaign.whatsapp.send_message',
-                'description'      => 'mautic.campaign.whatsapp.send_message.tooltip',
+                'label'            => 'mautic.whatsapp.campaign.send_message',
+                'description'      => 'mautic.whatsapp.campaign.send_message.tooltip',
                 'eventName'        => WhatsAppEvents::ON_CAMPAIGN_TRIGGER_ACTION,
                 'formType'         => WhatsAppSendType::class,
                 'formTypeOptions'  => ['update_select' => 'campaignevent_properties_whatsapp'],

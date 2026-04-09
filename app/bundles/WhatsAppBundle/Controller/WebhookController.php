@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Mautic\WhatsAppBundle\Controller;
 
-use Mautic\WhatsAppBundle\Callback\CallbackInterface;
 use Mautic\WhatsAppBundle\Integration\MetaCloud\Configuration;
+use Mautic\WhatsAppBundle\Service\WebhookProcessorService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +16,7 @@ class WebhookController extends AbstractController
     public function __construct(
         private Configuration $configuration,
         private LoggerInterface $mauticLogger,
+        private WebhookProcessorService $webhookProcessor,
     ) {
     }
 
@@ -83,8 +84,6 @@ class WebhookController extends AbstractController
     /**
      * Process a delivery status update from the Meta webhook.
      *
-     * Logs the status for now; database updates will be wired later.
-     *
      * @param array<string, mixed> $status
      */
     private function processStatus(array $status): void
@@ -96,22 +95,14 @@ class WebhookController extends AbstractController
             return;
         }
 
-        $recipientId = $status['recipient_id'] ?? '';
-        $timestamp   = $status['timestamp'] ?? '';
+        $timestamp = $status['timestamp'] ?? '';
 
-        $this->mauticLogger->info(
-            sprintf(
-                'WhatsApp webhook: status=%s, messageId=%s, recipientId=%s, timestamp=%s',
-                $statusType,
-                $messageId,
-                $recipientId,
-                $timestamp
-            )
-        );
+        $this->mauticLogger->info(sprintf(
+            'WhatsApp webhook: status=%s, messageId=%s',
+            $statusType,
+            $messageId
+        ));
 
-        // TODO: Find stat by wa_message_id and update:
-        // - status: sent -> delivered -> read
-        // - timestamps: dateDelivered, dateRead
-        // - message counters: deliveredCount, readCount
+        $this->webhookProcessor->processDeliveryStatus($messageId, $statusType, $timestamp);
     }
 }
