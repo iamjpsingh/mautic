@@ -9,6 +9,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Form type for "WhatsApp Reply" campaign decision.
@@ -18,10 +19,16 @@ use Symfony\Component\Form\FormBuilderInterface;
  *  - any reply (leave pattern empty)
  *  - no reply timeout (timeout field in hours)
  *
+ * @author iamjpsingh
+ *
  * @extends AbstractType<array<mixed>>
  */
 class CampaignReplyType extends AbstractType
 {
+    /**
+     * @param FormBuilderInterface<array<mixed>|null> $builder
+     * @param array<string, mixed>                    $options
+     */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add(
@@ -71,5 +78,10 @@ class CampaignReplyType extends AbstractType
                 'data'     => 24,
             ]
         );
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefined(['update_select']);
     }
 }

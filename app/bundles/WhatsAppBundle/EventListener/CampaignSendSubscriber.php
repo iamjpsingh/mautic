@@ -45,7 +45,7 @@ class CampaignSendSubscriber implements EventSubscriberInterface
                 'eventName'        => WhatsAppEvents::ON_CAMPAIGN_TRIGGER_ACTION_TEMPLATE,
                 'formType'         => WhatsAppTemplateSendType::class,
                 'formTypeOptions'  => ['update_select' => 'campaignevent_properties_whatsapp'],
-                'formTheme'        => '@MauticWhatsApp/FormTheme/WhatsAppSendList/whatsappsend_list_row.html.twig',
+                'formTheme'        => '@MauticWhatsApp/FormTheme/WhatsAppTemplateSendList/whatsapptemplatesend_list_row.html.twig',
                 'channel'          => 'whatsapp',
                 'channelIdField'   => 'whatsapp',
             ]

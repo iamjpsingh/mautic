@@ -81,6 +81,21 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
         return $this->em->getRepository(WhatsAppTemplate::class)->find($templateId);
     }
 
+    /**
+     * Find a WhatsApp template by name and optionally by language.
+     *
+     * @author iamjpsingh
+     */
+    public function findTemplateByName(string $name, ?string $language = null): ?WhatsAppTemplate
+    {
+        $criteria = ['name' => $name];
+        if ($language) {
+            $criteria['language'] = $language;
+        }
+
+        return $this->em->getRepository(WhatsAppTemplate::class)->findOneBy($criteria);
+    }
+
     public function getConnection(): \Doctrine\DBAL\Connection
     {
         return $this->em->getConnection();

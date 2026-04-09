@@ -1008,6 +1008,117 @@ class WhatsAppController extends FormController
         return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
     }
 
+    /**
+     * Display a page allowing the user to select a WhatsApp message to send to a contact.
+     *
+     * @author iamjpsingh
+     */
+    public function sendToContactSelectAction(Request $request, int $contactId): Response
+    {
+        $contact = $this->getModel('lead')->getEntity($contactId);
+
+        if (!$contact) {
+            $this->addFlashMessage('mautic.lead.lead.error.notfound', ['%id%' => $contactId], 'error');
+
+            return $this->redirectToRoute('mautic_contact_index');
+        }
+
+        /** @var WhatsAppModel $model */
+        $model    = $this->getModel('whatsapp');
+        $messages = $model->getEntities([
+            'filter' => [
+                'force' => [
+                    [
+                        'column' => 'e.isPublished',
+                        'expr'   => 'eq',
+                        'value'  => true,
+                    ],
+                ],
+            ],
+            'orderBy'    => 'e.name',
+            'orderByDir' => 'ASC',
+        ]);
+
+        return $this->delegateView([
+            'viewParameters' => [
+                'contact'  => $contact,
+                'messages' => $messages,
+            ],
+            'contentTemplate' => '@MauticWhatsApp/WhatsApp/send_to_contact.html.twig',
+            'passthroughVars' => [
+                'activeLink'    => '#mautic_contact_index',
+                'mauticContent' => 'whatsappSendToContact',
+                'route'         => $this->generateUrl('mautic_whatsapp_send_to_contact_select', [
+                    'contactId' => $contactId,
+                ]),
+            ],
+        ]);
+    }
+
+    /**
+     * Send a WhatsApp message to a specific contact from the contact page.
+     *
+     * @author iamjpsingh
+     */
+    public function sendToContactAction(Request $request, int $objectId, int $contactId): Response
+    {
+        /** @var WhatsAppModel $model */
+        $model   = $this->getModel('whatsapp');
+        $message = $model->getEntity($objectId);
+        $contact = $this->getModel('lead')->getEntity($contactId);
+
+        if (!$message || !$contact) {
+            $this->addFlashMessage('mautic.whatsapp.send_to_contact.not_found', [], 'error');
+
+            return $this->redirectToRoute('mautic_contact_action', [
+                'objectAction' => 'view',
+                'objectId'     => $contactId,
+            ]);
+        }
+
+        if (!$this->security->hasEntityAccess(
+            'whatsapp:messages:viewown',
+            'whatsapp:messages:viewother',
+            $message->getCreatedBy()
+        )) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $result        = $model->sendWhatsApp(
+                $message,
+                $contact,
+                ['channel' => ['whatsapp.message', $message->getId()]]
+            );
+            $contactResult = $result[$contact->getId()] ?? null;
+
+            if ($contactResult && !empty($contactResult['sent'])) {
+                $this->addFlashMessage(
+                    'mautic.whatsapp.send_to_contact.success',
+                    ['%name%' => $contact->getName()],
+                );
+            } else {
+                $status = $contactResult['status'] ?? 'Unknown';
+                $this->addFlashMessage(
+                    'mautic.whatsapp.send_to_contact.failed',
+                    ['%status%' => $status],
+                    'error',
+                );
+            }
+        } catch (\Exception $e) {
+            $this->addFlashMessage(
+                'mautic.whatsapp.send_to_contact.error',
+                ['%error%' => $e->getMessage()],
+                'error',
+            );
+        }
+
+        return $this->redirectToRoute('mautic_contact_action', [
+            'objectAction' => 'view',
+            'objectId'     => $contactId,
+        ]);
+    }
+
     protected function getModelName(): string
     {
         return 'whatsapp';

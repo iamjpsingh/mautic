@@ -1,11 +1,16 @@
-{% block _whatsappsend_list_row %}
+{% block _whatsapp_send_list_row %}
 <div class="row">
     <div class="col-xs-8">
         {{ form_row(form.whatsapp) }}
     </div>
     <div class="col-xs-4 mt-lg">
         <div class="mt-3">
-            {{ form_row(form.newWhatsAppButton) }}
+            {% if form.newWhatsAppButton is defined %}
+                {{ form_row(form.newWhatsAppButton) }}
+            {% endif %}
+            {% if form.editWhatsAppButton is defined %}
+                {{ form_row(form.editWhatsAppButton) }}
+            {% endif %}
         </div>
     </div>
 </div>

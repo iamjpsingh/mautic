@@ -65,6 +65,14 @@ return [
                 'path'       => '/whatsapp/templates/{page}',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::templatesAction',
             ],
+            'mautic_whatsapp_send_to_contact_select' => [
+                'path'       => '/whatsapp/send/contact/{contactId}',
+                'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::sendToContactSelectAction',
+            ],
+            'mautic_whatsapp_send_to_contact' => [
+                'path'       => '/whatsapp/{objectId}/send/{contactId}',
+                'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::sendToContactAction',
+            ],
             'mautic_whatsapp_action' => [
                 'path'       => '/whatsapp/{objectAction}/{objectId}',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::executeAction',

@@ -1,0 +1,68 @@
+{% extends '@MauticCore/Default/content.html.twig' %}
+
+{% block mauticContent %}whatsappSendToContact{% endblock %}
+{% block headerTitle %}{{ 'mautic.whatsapp.send_to_contact.header'|trans({'%name%': contact.getName()}) }}{% endblock %}
+
+{% block actions %}
+    {{- include('@MauticCore/Helper/page_actions.html.twig', {
+        'templateButtons': {
+            'close': true,
+        },
+        'routeBase': 'contact',
+        'langVar': 'lead.lead',
+        'customButtons': [],
+    }) -}}
+{% endblock %}
+
+{% block content %}
+<div class="box-layout">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <span class="ri-whatsapp-line"></span>
+                    {{ 'mautic.whatsapp.send_to_contact.select_message'|trans }}
+                </h3>
+            </div>
+            <div class="panel-body">
+                {% if messages is not empty %}
+                    <p class="text-muted mb-md">
+                        {{ 'mautic.whatsapp.send_to_contact.instructions'|trans({'%name%': contact.getName()}) }}
+                    </p>
+                    <div class="list-group">
+                        {% for message in messages %}
+                            <a href="{{ path('mautic_whatsapp_send_to_contact', {'objectId': message.getId(), 'contactId': contact.getId()}) }}"
+                               class="list-group-item"
+                               data-toggle="confirmation"
+                               data-message="{{ 'mautic.whatsapp.send_to_contact.confirm'|trans({'%message%': message.getName(), '%contact%': contact.getName()}) }}"
+                               data-confirm-text="{{ 'mautic.core.form.send'|trans }}"
+                               data-confirm-callback="submitUrl"
+                               data-cancel-text="{{ 'mautic.core.form.cancel'|trans }}"
+                               data-cancel-callback="dismissConfirmation">
+                                <h4 class="list-group-item-heading">
+                                    {{ message.getName() }}
+                                    {% set msgType = message.getMessageType() %}
+                                    <span class="label label-default ml-xs">{{ ('mautic.whatsapp.type.' ~ msgType)|trans }}</span>
+                                </h4>
+                                {% if message.getDescription() %}
+                                    <p class="list-group-item-text text-muted">{{ message.getDescription() }}</p>
+                                {% endif %}
+                                {% if msgType == 'template' and message.getTemplateName() %}
+                                    <p class="list-group-item-text text-muted small">
+                                        {{ 'mautic.whatsapp.template.name'|trans }}: {{ message.getTemplateName() }}
+                                        ({{ message.getTemplateLanguage() }})
+                                    </p>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        {{ 'mautic.whatsapp.send_to_contact.no_messages'|trans }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

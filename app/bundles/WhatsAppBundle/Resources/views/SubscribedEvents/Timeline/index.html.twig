@@ -1,0 +1,61 @@
+{% set item = event.extra.stat is defined ? event.extra.stat : false %}
+{% if (item) %}
+    {% set type = event.extra.type is defined ? event.extra.type : null %}
+    <p>
+        {% if item.isFailed is defined and item.isFailed is not empty and 'failed' == type %}
+            {% set details = item.details|json_decode|raw %}
+            {% set errors  = '' %}
+            {% if details.failed is defined %}
+                {% set failedDetails = details.failed %}
+                {% if failedDetails is not iterable %}
+                    {% set failedDetails = [failedDetails] %}
+                {% endif %}
+                {% set errors = failedDetails|join('<br />') %}
+            {% endif %}
+        <span class="text-danger mt-0 mb-10"><i class="ri-alert-line"></i>
+            {% if errors is defined and errors is not empty %}
+                {{ errors }}
+            {% else %}
+                {{ 'mautic.whatsapp.timeline.event.failed'|trans }}
+            {% endif %}
+        </span>
+
+        {% endif %}
+        {% if item.list_name is defined and item.list_name is not empty and 'failed' != type %}
+            <br />{{ 'mautic.whatsapp.timeline.event.list'|trans({ '%list%' : item.list_name }) }}
+        {% endif %}
+    </p>
+{% endif %}
+
+{% if errors is defined %}
+<p class="text-danger mt-0 mb-10">
+    <i class="ri-alert-line"></i> {{ 'mautic.campaign.event.last_error'|trans ~ ': ' ~ errors }}
+</p>
+{% else %}
+<dl class="dl-horizontal">
+    <dt>{{ 'mautic.whatsapp.timeline.status'|trans }}</dt>
+    <dd>
+        {% set statusBadge = event.extra.status is defined ? event.extra.status : 'sent' %}
+        {% if statusBadge == 'read' %}
+            <span class="label label-success">{{ 'mautic.whatsapp.timeline.status.read'|trans }}</span>
+        {% elseif statusBadge == 'delivered' %}
+            <span class="label label-info">{{ 'mautic.whatsapp.timeline.status.delivered'|trans }}</span>
+        {% elseif statusBadge == 'failed' %}
+            <span class="label label-danger">{{ 'mautic.whatsapp.timeline.status.failed'|trans }}</span>
+        {% else %}
+            <span class="label label-default">{{ 'mautic.whatsapp.timeline.status.sent'|trans }}</span>
+        {% endif %}
+    </dd>
+    <dt>{{ 'mautic.whatsapp.timeline.type'|trans }}</dt>
+    <dd>{{ item.type is defined and item.type ? ('mautic.whatsapp.type.' ~ item.type)|trans : '' }}</dd>
+</dl>
+{% endif %}
+
+{% if item.message is defined and item.message is not empty %}
+<div class="small">
+    <hr />
+    <strong>{{ 'mautic.whatsapp.timeline.content.heading'|trans }}</strong>
+    <br />
+    {{ item.message }}
+</div>
+{% endif %}
