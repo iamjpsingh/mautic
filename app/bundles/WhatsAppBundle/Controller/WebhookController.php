@@ -16,7 +16,7 @@ class WebhookController extends AbstractController
 {
     public function __construct(
         private HandlerContainer $callbackHandler,
-        private ReplyHelper $replyHelper,
+        private ?ReplyHelper $replyHelper = null,
     ) {
     }
 
@@ -42,6 +42,10 @@ class WebhookController extends AbstractController
         }
 
         // Handle incoming messages (POST)
+        if (null === $this->replyHelper) {
+            return new Response('OK', 200);
+        }
+
         return $this->replyHelper->handleRequest($handler, $request);
     }
 }
