@@ -4,48 +4,57 @@ declare(strict_types=1);
 
 namespace Mautic\WhatsAppBundle\Controller;
 
-use Mautic\WhatsAppBundle\Callback\HandlerContainer;
-use Mautic\WhatsAppBundle\Exception\CallbackHandlerNotFound;
-use Mautic\WhatsAppBundle\Helper\ReplyHelper;
+use Mautic\WhatsAppBundle\Callback\CallbackInterface;
+use Mautic\WhatsAppBundle\Integration\MetaCloud\Configuration;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class WebhookController extends AbstractController
 {
     public function __construct(
-        private HandlerContainer $callbackHandler,
-        private ?ReplyHelper $replyHelper = null,
+        private Configuration $configuration,
     ) {
     }
 
     /**
      * Handles both GET (webhook verification) and POST (incoming messages/statuses).
-     *
-     * @throws \Exception
      */
     public function callbackAction(Request $request, string $transport): Response
     {
-        define('MAUTIC_NON_TRACKABLE_REQUEST', 1);
-
-        try {
-            $handler = $this->callbackHandler->getHandler($transport);
-        } catch (CallbackHandlerNotFound) {
-            throw new NotFoundHttpException();
+        if (!defined('MAUTIC_NON_TRACKABLE_REQUEST')) {
+            define('MAUTIC_NON_TRACKABLE_REQUEST', 1);
         }
 
         // Handle webhook verification (GET)
-        $verificationResponse = $handler->handleVerification($request);
-        if (null !== $verificationResponse) {
-            return $verificationResponse;
+        if ($request->isMethod('GET')) {
+            return $this->handleVerification($request);
         }
 
-        // Handle incoming messages (POST)
-        if (null === $this->replyHelper) {
-            return new Response('OK', 200);
+        // Handle incoming POST (messages + status updates)
+        return new Response('OK', 200);
+    }
+
+    private function handleVerification(Request $request): Response
+    {
+        $mode      = $request->query->get('hub_mode');
+        $token     = $request->query->get('hub_verify_token');
+        $challenge = $request->query->get('hub_challenge');
+
+        if ('subscribe' !== $mode || null === $token || null === $challenge) {
+            return new Response('Bad request', 400);
         }
 
-        return $this->replyHelper->handleRequest($handler, $request);
+        try {
+            $expectedToken = $this->configuration->getWebhookVerifyToken();
+        } catch (\Exception) {
+            return new Response('Not configured', 500);
+        }
+
+        if ($token !== $expectedToken) {
+            return new Response('Invalid token', 403);
+        }
+
+        return new Response($challenge, 200, ['Content-Type' => 'text/plain']);
     }
 }
