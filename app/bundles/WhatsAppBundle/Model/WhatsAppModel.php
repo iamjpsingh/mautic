@@ -381,7 +381,7 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                 $lead,
                 $message->getTemplateName() ?? '',
                 $message->getTemplateLanguage() ?? 'en_US',
-                $message->getTemplateComponents(),
+                [], // Don't send synced template components — they're definitions, not send parameters
             ),
             WhatsAppMessage::MESSAGE_TYPE_MEDIA => $this->transport->sendMedia(
                 $lead,

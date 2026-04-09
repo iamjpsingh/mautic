@@ -40,18 +40,6 @@
     } %}
     {% set customButtons = customButtons|merge([sendButton]) %}
 
-    {# Send Test to specific contact #}
-    {% set sendTestButton = {
-        'attr': {
-            'data-toggle': 'ajax',
-            'href': path('mautic_whatsapp_action', {'objectAction': 'sendTest', 'objectId': whatsapp.getId()}),
-        },
-        'iconClass': 'ri-mail-send-line',
-        'btnText': 'Send Test',
-        'primary': true,
-        'priority': 400,
-    } %}
-    {% set customButtons = customButtons|merge([sendTestButton]) %}
     {{- include('@MauticCore/Helper/page_actions.html.twig',
         {
             'item'            : whatsapp,

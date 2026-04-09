@@ -213,20 +213,15 @@ class MetaCloudTransport implements TransportInterface
     {
         $number = $lead->getLeadPhoneNumber();
 
-        if (null === $number) {
+        if (null === $number || '' === trim($number)) {
             return null;
         }
 
-        try {
-            return $this->sanitizeNumber($number);
-        } catch (NumberParseException $e) {
-            $this->logger->warning(
-                'Failed to parse phone number for WhatsApp: '.$e->getMessage(),
-                ['exception' => $e]
-            );
+        // Strip everything except digits and +
+        $cleaned = preg_replace('/[^0-9+]/', '', $number);
 
-            return null;
-        }
+        // Remove leading + (Meta API expects no +)
+        return ltrim($cleaned, '+');
     }
 
     /**
