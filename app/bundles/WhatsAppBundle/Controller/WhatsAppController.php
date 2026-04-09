@@ -194,21 +194,7 @@ class WhatsAppController extends FormController
         $templateButtons = null;
 
         if ('template' === $message->getMessageType() && $message->getTemplateName()) {
-            /** @var WhatsAppTemplateRepository $templateRepo */
-            $templateRepo = $model->getRepository()->getEntityManager()->getRepository(WhatsAppTemplate::class);
-            $templates    = $templateRepo->findByName($message->getTemplateName());
-
-            // Match by language if possible, otherwise take the first result
-            $matchedTemplate = null;
-            foreach ($templates as $tpl) {
-                if ($tpl->getLanguage() === $message->getTemplateLanguage()) {
-                    $matchedTemplate = $tpl;
-                    break;
-                }
-            }
-            if (null === $matchedTemplate && !empty($templates)) {
-                $matchedTemplate = $templates[0];
-            }
+            $matchedTemplate = $model->findTemplateByName($message->getTemplateName(), $message->getTemplateLanguage());
 
             if (null !== $matchedTemplate && is_array($matchedTemplate->getComponents())) {
                 foreach ($matchedTemplate->getComponents() as $component) {
@@ -967,10 +953,13 @@ class WhatsAppController extends FormController
 
         if (!$contactId) {
             // Send to the first contact with a phone number
-            $leads = $model->getRepository()->getEntityManager()
-                ->createQuery('SELECT l FROM Mautic\LeadBundle\Entity\Lead l WHERE l.phone IS NOT NULL')
-                ->setMaxResults(1)
-                ->getResult();
+            $contactIds = $model->getConnection()->fetchFirstColumn(
+                'SELECT id FROM '.MAUTIC_TABLE_PREFIX.'leads WHERE phone IS NOT NULL LIMIT 1'
+            );
+            $leads = [];
+            foreach ($contactIds as $cid) {
+                $leads[] = $this->getModel('lead')->getEntity($cid);
+            }
 
             if (empty($leads)) {
                 $this->addFlashMessage('No contacts with phone numbers found', [], 'error', false);
