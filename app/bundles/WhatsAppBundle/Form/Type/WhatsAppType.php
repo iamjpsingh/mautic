@@ -132,6 +132,22 @@ class WhatsAppType extends AbstractType
                 ],
             ]
         );
+        $builder->get('templateComponents')->addModelTransformer(new class() implements \Symfony\Component\Form\DataTransformerInterface {
+            public function transform(mixed $value): ?string
+            {
+                if (is_array($value)) {
+                    return json_encode($value) ?: '[]';
+                }
+                return is_string($value) ? $value : '[]';
+            }
+            public function reverseTransform(mixed $value): array
+            {
+                if (is_string($value) && !empty($value)) {
+                    return json_decode($value, true) ?: [];
+                }
+                return is_array($value) ? $value : [];
+            }
+        });
 
         // Session / text message body
         $builder->add(
@@ -212,6 +228,22 @@ class WhatsAppType extends AbstractType
                 ],
             ]
         );
+        $builder->get('interactiveData')->addModelTransformer(new class() implements \Symfony\Component\Form\DataTransformerInterface {
+            public function transform(mixed $value): ?string
+            {
+                if (is_array($value)) {
+                    return json_encode($value) ?: '[]';
+                }
+                return is_string($value) ? $value : '[]';
+            }
+            public function reverseTransform(mixed $value): array
+            {
+                if (is_string($value) && !empty($value)) {
+                    return json_decode($value, true) ?: [];
+                }
+                return is_array($value) ? $value : [];
+            }
+        });
 
         $builder->add('isPublished', YesNoButtonGroupType::class, [
             'label' => 'mautic.core.form.available',
