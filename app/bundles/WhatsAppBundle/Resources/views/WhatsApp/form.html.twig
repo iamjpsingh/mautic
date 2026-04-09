@@ -23,17 +23,32 @@
       </div>
     </div>
 
-    <!-- Template Preview Panel -->
-    <div id="whatsapp-template-preview-panel" class="panel panel-default hide" style="margin-top:15px">
-      <div class="panel-heading">
-        <h5 class="panel-title">Template Preview</h5>
-        <span id="preview-category-badge" class="label label-default pull-right"></span>
-      </div>
-      <div class="panel-body">
-        <div id="preview-header" class="hide"><strong>Header:</strong> <span id="preview-header-text"></span><hr></div>
-        <div id="preview-body"><strong>Body:</strong><div id="preview-body-text" class="well well-sm" style="white-space:pre-wrap"></div></div>
-        <div id="preview-footer" class="hide"><strong>Footer:</strong> <span id="preview-footer-text" class="text-muted"></span></div>
-        <div id="preview-buttons" class="hide"><strong>Buttons:</strong> <div id="preview-buttons-list"></div></div>
+    <!-- Template Preview Panel (WhatsApp-style) -->
+    <div id="whatsapp-template-preview-panel" class="hide" style="margin-top:15px">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h5 class="panel-title"><i class="ri-whatsapp-line"></i> {{ 'mautic.whatsapp.template.preview'|trans }}</h5>
+          <span id="preview-category-badge" class="label label-success pull-right" style="display:none"></span>
+        </div>
+        <div class="panel-body" style="background:#e5ddd5;padding:20px;">
+          <div id="whatsapp-bubble" style="background:#dcf8c6;border-radius:8px;padding:10px 14px;max-width:90%;margin-left:auto;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.13);">
+            <div id="preview-header" class="hide" style="font-weight:bold;font-size:14px;margin-bottom:6px;">
+              <span id="preview-header-text"></span>
+            </div>
+            <div id="preview-body">
+              <span id="preview-body-text" style="white-space:pre-wrap;font-size:13px;color:#303030;"></span>
+            </div>
+            <div id="preview-footer" class="hide" style="font-size:11px;color:#8c8c8c;margin-top:4px;">
+              <span id="preview-footer-text"></span>
+            </div>
+            <div style="text-align:right;margin-top:2px;">
+              <span style="font-size:10px;color:#8c8c8c;" id="preview-timestamp"></span>
+            </div>
+          </div>
+          <div id="preview-buttons" class="hide" style="margin-top:6px;max-width:90%;margin-left:auto;">
+            <div id="preview-buttons-list"></div>
+          </div>
+        </div>
       </div>
     </div>
 

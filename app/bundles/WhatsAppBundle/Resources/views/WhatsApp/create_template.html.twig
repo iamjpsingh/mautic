@@ -1,0 +1,164 @@
+{% extends '@MauticCore/Default/content.html.twig' %}
+
+{% block mauticContent %}whatsapp_templates{% endblock %}
+
+{% block headerTitle %}{{ 'mautic.whatsapp.template.create.title'|trans }}{% endblock %}
+
+{% block actions %}
+    <div class="btn-group">
+        <a class="btn btn-default" href="{{ path('mautic_whatsapp_templates') }}">
+            <i class="ri-arrow-left-line"></i> {{ 'mautic.core.form.cancel'|trans }}
+        </a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ path('mautic_whatsapp_create_template') }}">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="ri-file-add-line"></i> {{ 'mautic.whatsapp.template.create.heading'|trans }}</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="control-label" for="template_name">{{ 'mautic.whatsapp.template.create.name'|trans }} <span class="text-danger">*</span></label>
+                                <input type="text" id="template_name" name="template_name" class="form-control" required
+                                       placeholder="{{ 'mautic.whatsapp.template.create.name.placeholder'|trans }}"
+                                       pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores">
+                                <p class="help-block text-muted small">{{ 'mautic.whatsapp.template.create.name.help'|trans }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="control-label" for="template_category">{{ 'mautic.whatsapp.template.category'|trans }}</label>
+                                <select id="template_category" name="template_category" class="form-control">
+                                    <option value="MARKETING">Marketing</option>
+                                    <option value="UTILITY">Utility</option>
+                                    <option value="AUTHENTICATION">Authentication</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="control-label" for="template_language">{{ 'mautic.whatsapp.template.language'|trans }}</label>
+                                <select id="template_language" name="template_language" class="form-control">
+                                    <option value="en_US">English (US)</option>
+                                    <option value="en_GB">English (UK)</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                    <option value="pt_BR">Portuguese (BR)</option>
+                                    <option value="hi">Hindi</option>
+                                    <option value="ar">Arabic</option>
+                                    <option value="zh_CN">Chinese (Simplified)</option>
+                                    <option value="ja">Japanese</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-group">
+                        <label class="control-label" for="template_header">{{ 'mautic.whatsapp.template.header'|trans }}</label>
+                        <input type="text" id="template_header" name="template_header" class="form-control"
+                               placeholder="{{ 'mautic.whatsapp.template.create.header.placeholder'|trans }}" maxlength="60">
+                        <p class="help-block text-muted small">{{ 'mautic.whatsapp.template.create.header.help'|trans }}</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label" for="template_body">{{ 'mautic.whatsapp.template.body'|trans }} <span class="text-danger">*</span></label>
+                        <textarea id="template_body" name="template_body" class="form-control" rows="6" required
+                                  placeholder="{{ 'mautic.whatsapp.template.create.body.placeholder'|trans }}" maxlength="1024"></textarea>
+                        <p class="help-block text-muted small">{{ 'mautic.whatsapp.template.create.body.help'|trans }}</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label" for="template_footer">{{ 'mautic.whatsapp.template.footer'|trans }}</label>
+                        <input type="text" id="template_footer" name="template_footer" class="form-control"
+                               placeholder="{{ 'mautic.whatsapp.template.create.footer.placeholder'|trans }}" maxlength="60">
+                    </div>
+
+                    <hr>
+                    <h5>{{ 'mautic.whatsapp.template.buttons'|trans }}</h5>
+                    <p class="text-muted small">{{ 'mautic.whatsapp.template.create.buttons.help'|trans }}</p>
+
+                    <div id="template-buttons-container">
+                        <div class="row template-button-row" data-index="0">
+                            <div class="col-md-3">
+                                <select name="template_buttons[0][type]" class="form-control">
+                                    <option value="">-- No Button --</option>
+                                    <option value="QUICK_REPLY">Quick Reply</option>
+                                    <option value="URL">URL</option>
+                                    <option value="PHONE_NUMBER">Phone Number</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="template_buttons[0][text]" class="form-control" placeholder="Button text">
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" name="template_buttons[0][url]" class="form-control" placeholder="URL (for URL buttons only)">
+                            </div>
+                        </div>
+                        <div class="row template-button-row mt-sm" data-index="1" style="margin-top:8px;">
+                            <div class="col-md-3">
+                                <select name="template_buttons[1][type]" class="form-control">
+                                    <option value="">-- No Button --</option>
+                                    <option value="QUICK_REPLY">Quick Reply</option>
+                                    <option value="URL">URL</option>
+                                    <option value="PHONE_NUMBER">Phone Number</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="template_buttons[1][text]" class="form-control" placeholder="Button text">
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" name="template_buttons[1][url]" class="form-control" placeholder="URL (for URL buttons only)">
+                            </div>
+                        </div>
+                        <div class="row template-button-row mt-sm" data-index="2" style="margin-top:8px;">
+                            <div class="col-md-3">
+                                <select name="template_buttons[2][type]" class="form-control">
+                                    <option value="">-- No Button --</option>
+                                    <option value="QUICK_REPLY">Quick Reply</option>
+                                    <option value="URL">URL</option>
+                                    <option value="PHONE_NUMBER">Phone Number</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="template_buttons[2][text]" class="form-control" placeholder="Button text">
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" name="template_buttons[2][url]" class="form-control" placeholder="URL (for URL buttons only)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="ri-information-line"></i> {{ 'mautic.whatsapp.template.create.info.title'|trans }}</h3>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-sm"><i class="ri-checkbox-circle-line text-success"></i> {{ 'mautic.whatsapp.template.create.info.1'|trans }}</li>
+                        <li class="mb-sm"><i class="ri-checkbox-circle-line text-success"></i> {{ 'mautic.whatsapp.template.create.info.2'|trans }}</li>
+                        <li class="mb-sm"><i class="ri-checkbox-circle-line text-success"></i> {{ 'mautic.whatsapp.template.create.info.3'|trans }}</li>
+                        <li class="mb-sm"><i class="ri-error-warning-line text-warning"></i> {{ 'mautic.whatsapp.template.create.info.4'|trans }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i class="ri-send-plane-line"></i> {{ 'mautic.whatsapp.template.create.submit'|trans }}
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

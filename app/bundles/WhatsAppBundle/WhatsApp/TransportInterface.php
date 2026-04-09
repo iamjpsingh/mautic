@@ -11,7 +11,7 @@ interface TransportInterface
     /**
      * Send a plain text message.
      *
-     * @return bool|string true on success, error message string on failure
+     * @return bool|string true on success, wamid string on success with ID, or error message on failure
      */
     public function sendText(Lead $lead, string $content): bool|string;
 

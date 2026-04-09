@@ -348,8 +348,11 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                     // Route to the correct transport method based on message type
                     $metadata = $this->dispatchToTransport($message, $lead, $tokenEvent->getContent());
 
-                    if (true !== $metadata) {
-                        $sendResult['status'] = $metadata;
+                    // Transport returns: true (success), wamid string (success with ID), or error string (failure)
+                    $isSent = true === $metadata || (is_string($metadata) && str_starts_with($metadata, 'wamid.'));
+
+                    if (!$isSent) {
+                        $sendResult['status'] = is_string($metadata) ? $metadata : 'Unknown send error';
                         $stat->setIsFailed(true);
                         $stat->setStatus(WhatsAppStat::STATUS_FAILED);
                         if (is_string($metadata)) {
@@ -359,6 +362,12 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                     } else {
                         $sendResult['sent'] = true;
                         $stat->setStatus(WhatsAppStat::STATUS_SENT);
+
+                        // Store the Meta message ID (wamid) for delivery tracking
+                        if (is_string($metadata) && '' !== $metadata) {
+                            $stat->setWhatsappMessageId($metadata);
+                        }
+
                         ++$sentCount;
                     }
 

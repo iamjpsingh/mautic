@@ -73,6 +73,10 @@ return [
                 'path'       => '/whatsapp/{objectId}/send/{contactId}',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::sendToContactAction',
             ],
+            'mautic_whatsapp_create_template' => [
+                'path'       => '/whatsapp/templates/create',
+                'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::createTemplateAction',
+            ],
             'mautic_whatsapp_action' => [
                 'path'       => '/whatsapp/{objectAction}/{objectId}',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::executeAction',

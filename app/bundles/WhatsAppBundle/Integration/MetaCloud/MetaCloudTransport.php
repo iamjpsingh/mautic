@@ -183,6 +183,14 @@ class MetaCloudTransport implements TransportInterface
 
             $statusCode = $response->getStatusCode();
             if ($statusCode >= 200 && $statusCode < 300) {
+                $body = $response->toArray(false);
+
+                // Return the Meta message ID (wamid) if available, for delivery tracking
+                $messages = $body['messages'] ?? [];
+                if (!empty($messages[0]['id'])) {
+                    return $messages[0]['id'];
+                }
+
                 return true;
             }
 

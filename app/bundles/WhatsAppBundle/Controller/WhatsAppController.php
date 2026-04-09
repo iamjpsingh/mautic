@@ -214,6 +214,13 @@ class WhatsAppController extends FormController
             }
         }
 
+        // Get failed count from stats
+        $failedCount = $model->getStatRepository()->getSentCount(null) > 0
+            ? $model->getConnection()->fetchOne(
+                'SELECT COUNT(*) FROM '.MAUTIC_TABLE_PREFIX.'whatsapp_message_stats WHERE whatsapp_message_id = ? AND is_failed = 1',
+                [$message->getId()]
+            ) : 0;
+
         // Init the date range filter form
         $dateRangeValues = $request->query->all()['daterange'] ?? $request->request->all()['daterange'] ?? [];
         $action          = $this->generateUrl('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
@@ -254,6 +261,7 @@ class WhatsAppController extends FormController
                     ]
                 )->getContent(),
                 'dateRangeForm'    => $dateRangeForm->createView(),
+                'failedCount'      => (int) $failedCount,
                 'templateBody'     => $templateBody,
                 'templateHeader'   => $templateHeader,
                 'templateFooter'   => $templateFooter,
@@ -489,6 +497,14 @@ class WhatsAppController extends FormController
             : $request->get('updateSelect', false);
 
         $form = $model->createForm($entity, $this->formFactory, $action, ['update_select' => $updateSelect]);
+
+        // Pre-select the template in the dropdown when editing a template message
+        if ('template' === $entity->getMessageType() && $entity->getTemplateName() && $form->has('templateId')) {
+            $matchedTemplate = $model->findTemplateByName($entity->getTemplateName(), $entity->getTemplateLanguage());
+            if (null !== $matchedTemplate) {
+                $form->get('templateId')->setData($matchedTemplate->getId());
+            }
+        }
 
         // Check for a submitted form and process it
         if (!$ignorePost && 'POST' == $method) {
@@ -1105,6 +1121,92 @@ class WhatsAppController extends FormController
         return $this->redirectToRoute('mautic_contact_action', [
             'objectAction' => 'view',
             'objectId'     => $contactId,
+        ]);
+    }
+
+    /**
+     * Create a new WhatsApp template and submit it to Meta for approval.
+     */
+    public function createTemplateAction(Request $request, TemplateSyncService $syncService): Response
+    {
+        if (!$this->security->isGranted('whatsapp:messages:create')) {
+            return $this->accessDenied();
+        }
+
+        if ('POST' === $request->getMethod()) {
+            $data = $request->request->all();
+
+            $name     = InputHelper::clean($data['template_name'] ?? '');
+            $category = InputHelper::clean($data['template_category'] ?? 'MARKETING');
+            $language = InputHelper::clean($data['template_language'] ?? 'en_US');
+            $bodyText = $data['template_body'] ?? '';
+
+            if (empty($name) || empty($bodyText)) {
+                $this->addFlashMessage('Template name and body are required.', [], 'error', false);
+
+                return $this->redirectToRoute('mautic_whatsapp_create_template');
+            }
+
+            // Build components array for Meta API
+            $components = [];
+
+            $headerText = $data['template_header'] ?? '';
+            if (!empty($headerText)) {
+                $components[] = ['type' => 'HEADER', 'format' => 'TEXT', 'text' => $headerText];
+            }
+
+            $components[] = ['type' => 'BODY', 'text' => $bodyText];
+
+            $footerText = $data['template_footer'] ?? '';
+            if (!empty($footerText)) {
+                $components[] = ['type' => 'FOOTER', 'text' => $footerText];
+            }
+
+            // Parse buttons
+            $buttonsRaw = $data['template_buttons'] ?? [];
+            if (!empty($buttonsRaw) && is_array($buttonsRaw)) {
+                $buttons = [];
+                foreach ($buttonsRaw as $btn) {
+                    $btnText = $btn['text'] ?? '';
+                    $btnType = $btn['type'] ?? 'QUICK_REPLY';
+                    if (!empty($btnText)) {
+                        $button = ['type' => $btnType, 'text' => $btnText];
+                        if ('URL' === $btnType && !empty($btn['url'])) {
+                            $button['url'] = $btn['url'];
+                        }
+                        $buttons[] = $button;
+                    }
+                }
+                if (!empty($buttons)) {
+                    $components[] = ['type' => 'BUTTONS', 'buttons' => $buttons];
+                }
+            }
+
+            try {
+                $result = $syncService->submitTemplate($name, $category, $language, $components);
+                $this->addFlashMessage(
+                    'Template "%name%" submitted successfully. Status: %status%',
+                    ['%name%' => $name, '%status%' => $result['status'] ?? 'PENDING'],
+                    'notice',
+                    false
+                );
+
+                return $this->redirectToRoute('mautic_whatsapp_templates');
+            } catch (\RuntimeException $e) {
+                $this->addFlashMessage($e->getMessage(), [], 'error', false);
+
+                return $this->redirectToRoute('mautic_whatsapp_create_template');
+            }
+        }
+
+        return $this->delegateView([
+            'viewParameters'  => [],
+            'contentTemplate' => '@MauticWhatsApp/WhatsApp/create_template.html.twig',
+            'passthroughVars' => [
+                'activeLink'    => '#mautic_whatsapp_templates',
+                'mauticContent' => 'whatsapp_templates',
+                'route'         => $this->generateUrl('mautic_whatsapp_create_template'),
+            ],
         ]);
     }
 

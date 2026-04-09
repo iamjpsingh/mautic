@@ -173,7 +173,7 @@
                             },
                             {
                                 'title': 'mautic.whatsapp.stat.failed',
-                                'value': 0,
+                                'value': failedCount|default(0),
                                 'icon': 'ri-error-warning-line'
                             }
                         ]}) }}
@@ -247,8 +247,8 @@
                             </tr>
                             <tr>
                                 <td>{{ 'mautic.whatsapp.stat.failed'|trans }}</td>
-                                <td>{{ 0 }}</td>
-                                <td>{{ whatsapp.sentCount > 0 ? ((0 / whatsapp.sentCount) * 100)|number_format(1) ~ '%' : '0%' }}</td>
+                                <td>{{ failedCount|default(0) }}</td>
+                                <td>{{ whatsapp.sentCount > 0 ? (((failedCount|default(0)) / whatsapp.sentCount) * 100)|number_format(1) ~ '%' : '0%' }}</td>
                             </tr>
                         </tbody>
                     </table>
