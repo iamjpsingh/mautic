@@ -747,7 +747,8 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                 );
 
                 foreach ($entities as $entity) {
-                    $results[$entity['language']][$entity['id']] = $entity['name'];
+                    $lang = $entity['templateLanguage'] ?? 'en';
+                    $results[$lang][$entity['id']] = $entity['name'];
                 }
 
                 ksort($results);

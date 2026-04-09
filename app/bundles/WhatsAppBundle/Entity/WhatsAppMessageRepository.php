@@ -208,7 +208,7 @@ class WhatsAppMessageRepository extends CommonRepository
         array $ignoreIds = [],
     ): array {
         $q = $this->createQueryBuilder('e');
-        $q->select('partial e.{id, name, language}');
+        $q->select('partial e.{id, name, templateLanguage}');
 
         if (!empty($search)) {
             if (is_array($search)) {
