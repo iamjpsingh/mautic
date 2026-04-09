@@ -6,12 +6,8 @@ namespace Mautic\WhatsAppBundle\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
-/**
- * Form type for "Send WhatsApp Message" campaign action (session messages).
- *
- * @extends AbstractType<array<mixed>>
- */
 class WhatsAppSendType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -30,5 +26,15 @@ class WhatsAppSendType extends AbstractType
                 'required'   => true,
             ]
         );
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefined(['update_select']);
+    }
+
+    public function getBlockPrefix(): string
+    {
+        return 'whatsapp_send_list';
     }
 }
