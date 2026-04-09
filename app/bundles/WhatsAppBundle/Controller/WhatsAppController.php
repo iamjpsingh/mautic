@@ -286,7 +286,11 @@ class WhatsAppController extends FormController
                         if ($whatsAppTemplate) {
                             $entity->setTemplateName($whatsAppTemplate->getName());
                             $entity->setTemplateLanguage($whatsAppTemplate->getLanguage());
-                            $entity->setTemplateComponents($whatsAppTemplate->getComponents() ?? []);
+                            // Only set raw components if no parameter mapping was provided
+                            $currentComponents = $entity->getTemplateComponents();
+                            if (empty($currentComponents) || !isset($currentComponents[0]['param'])) {
+                                $entity->setTemplateComponents($whatsAppTemplate->getComponents() ?? []);
+                            }
                         }
                     }
                     // form is valid so process the data
@@ -466,7 +470,11 @@ class WhatsAppController extends FormController
                         if ($whatsAppTemplate) {
                             $entity->setTemplateName($whatsAppTemplate->getName());
                             $entity->setTemplateLanguage($whatsAppTemplate->getLanguage());
-                            $entity->setTemplateComponents($whatsAppTemplate->getComponents() ?? []);
+                            // Only set raw components if no parameter mapping was provided
+                            $currentComponents = $entity->getTemplateComponents();
+                            if (empty($currentComponents) || !isset($currentComponents[0]['param'])) {
+                                $entity->setTemplateComponents($whatsAppTemplate->getComponents() ?? []);
+                            }
                         }
                     }
                     // form is valid so process the data

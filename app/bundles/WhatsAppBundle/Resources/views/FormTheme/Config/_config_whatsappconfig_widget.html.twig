@@ -44,4 +44,16 @@
         </div>
     </div>
 </div>
+<hr>
+<div class="row">
+  <div class="col-md-12">
+    <h4>Webhook Status</h4>
+    {% set webhookUrl = app.request.schemeAndHttpHost ~ '/whatsapp/meta_cloud/callback' %}
+    <div class="well">
+      <p><strong>Webhook URL:</strong> <code>{{ webhookUrl }}</code></p>
+      <p><strong>Verify Token:</strong> <code>{{ form.whatsapp_webhook_verify_token.vars.value }}</code></p>
+      <p class="text-muted small">Configure this URL in your Meta Developer Dashboard &rarr; WhatsApp &rarr; Configuration &rarr; Webhook</p>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -38,4 +38,9 @@ Mautic.whatsappOnLoad = function(container) {
         messageField.on('keyup change', updateCounter);
         updateCounter();
     }
+
+    // Initialize template preview and placeholder mapping
+    if (typeof Mautic.whatsappTemplateOnLoad === 'function') {
+        Mautic.whatsappTemplateOnLoad(container);
+    }
 };

@@ -400,20 +400,87 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
     /**
      * Build the components array for a template send request.
      *
-     * Inspects the stored template components for variable placeholders (e.g. {{1}}, {{2}}).
-     * If variables are found, maps them to contact field values.
-     * Returns an empty array when the template has no parameters.
+     * Checks for parameter mapping format first (from the placeholder mapping UI),
+     * then falls back to auto-detection from raw template components.
      *
      * @return array<int, array<string, mixed>>
      */
     private function buildTemplateSendComponents(WhatsAppMessage $message, Lead $lead): array
     {
-        $storedComponents = $message->getTemplateComponents();
+        $mapping = $message->getTemplateComponents();
 
-        if (empty($storedComponents)) {
+        if (empty($mapping)) {
             return [];
         }
 
+        // Check if mapping is parameter mapping format [{param:1, token:"..."}, ...]
+        if (isset($mapping[0]['param'])) {
+            return $this->buildFromMapping($mapping, $lead);
+        }
+
+        // Fallback: old format (raw Meta component data)
+        return $this->buildAutoComponents($mapping, $lead);
+    }
+
+    /**
+     * Build components from explicit parameter mapping (from the UI).
+     *
+     * @param array<int, array<string, mixed>> $mapping
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildFromMapping(array $mapping, Lead $lead): array
+    {
+        $parameters = [];
+
+        // Sort by param number
+        usort($mapping, fn ($a, $b) => ($a['param'] ?? 0) <=> ($b['param'] ?? 0));
+
+        foreach ($mapping as $entry) {
+            $token      = $entry['token'] ?? '';
+            $value      = $this->resolveToken($token, $lead);
+            $parameters[] = ['type' => 'text', 'text' => $value];
+        }
+
+        if (empty($parameters)) {
+            return [];
+        }
+
+        return [['type' => 'body', 'parameters' => $parameters]];
+    }
+
+    /**
+     * Resolve a token string to an actual value using lead data.
+     */
+    private function resolveToken(string $token, Lead $lead): string
+    {
+        // Contact field token: {contactfield=firstname} or {contactfield=firstname|Default}
+        if (preg_match('/\{contactfield=(\w+)(?:\|(.+?))?\}/', $token, $matches)) {
+            $field   = $matches[1];
+            $default = $matches[2] ?? '';
+            $value   = $lead->getFieldValue($field);
+
+            return !empty($value) ? (string) $value : ($default ?: 'N/A');
+        }
+
+        // DateTime token: {datetime=now}
+        if (preg_match('/\{datetime=(.+?)\}/', $token, $matches)) {
+            return (new \DateTime())->format('Y-m-d H:i');
+        }
+
+        // Plain text value
+        return $token ?: 'N/A';
+    }
+
+    /**
+     * Fallback: auto-detect variables from raw Meta template components.
+     *
+     * @param array<int, array<string, mixed>> $storedComponents
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildAutoComponents(array $storedComponents, Lead $lead): array
+    {
         $sendComponents = [];
 
         foreach ($storedComponents as $component) {
@@ -429,7 +496,6 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                 if (preg_match_all('/\{\{(\d+)\}\}/', $text, $matches)) {
                     $parameters = [];
                     foreach ($matches[1] as $index) {
-                        // Map parameters to contact fields; {{1}} -> firstname, others -> generic value
                         $value = match ((int) $index) {
                             1       => $lead->getFirstname() ?: 'Valued Customer',
                             default => 'N/A',

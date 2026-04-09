@@ -16,6 +16,62 @@ class AjaxController extends CommonAjaxController
 {
     use AjaxLookupControllerTrait;
 
+    /**
+     * Return template data for the preview panel (AJAX).
+     */
+    public function templatePreviewAction(Request $request): JsonResponse
+    {
+        $templateId = (int) $request->get('templateId');
+
+        if (!$templateId) {
+            return new JsonResponse(['error' => 'Missing templateId'], 400);
+        }
+
+        /** @var WhatsAppModel $model */
+        $model    = $this->getModel('whatsapp');
+        $template = $model->findTemplate($templateId);
+
+        if (!$template) {
+            return new JsonResponse(['error' => 'Template not found'], 404);
+        }
+
+        $components = $template->getComponents() ?? [];
+        $body       = '';
+        $header     = '';
+        $footer     = '';
+        $buttons    = [];
+
+        foreach ($components as $component) {
+            $type = strtoupper($component['type'] ?? '');
+
+            switch ($type) {
+                case 'BODY':
+                    $body = $component['text'] ?? '';
+                    break;
+                case 'HEADER':
+                    $header = $component['text'] ?? '';
+                    break;
+                case 'FOOTER':
+                    $footer = $component['text'] ?? '';
+                    break;
+                case 'BUTTONS':
+                    $buttons = $component['buttons'] ?? [];
+                    break;
+            }
+        }
+
+        return new JsonResponse([
+            'name'       => $template->getName(),
+            'category'   => $template->getCategory(),
+            'language'   => $template->getLanguage(),
+            'components' => $components,
+            'body'       => $body,
+            'header'     => $header,
+            'footer'     => $footer,
+            'buttons'    => $buttons,
+        ]);
+    }
+
     public function getWhatsAppCountStatsAction(Request $request, BroadcastQuery $broadcastQuery, CacheStorageHelper $cacheStorageHelper): JsonResponse
     {
         /** @var WhatsAppModel $model */

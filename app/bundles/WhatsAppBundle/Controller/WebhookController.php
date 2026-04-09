@@ -6,6 +6,7 @@ namespace Mautic\WhatsAppBundle\Controller;
 
 use Mautic\WhatsAppBundle\Callback\CallbackInterface;
 use Mautic\WhatsAppBundle\Integration\MetaCloud\Configuration;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,6 +15,7 @@ class WebhookController extends AbstractController
 {
     public function __construct(
         private Configuration $configuration,
+        private LoggerInterface $mauticLogger,
     ) {
     }
 
@@ -32,6 +34,26 @@ class WebhookController extends AbstractController
         }
 
         // Handle incoming POST (messages + status updates)
+        if ($request->isMethod('POST')) {
+            $payload = json_decode($request->getContent(), true);
+
+            if (is_array($payload)) {
+                // Process status updates
+                foreach ($payload['entry'] ?? [] as $entry) {
+                    foreach ($entry['changes'] ?? [] as $change) {
+                        $value = $change['value'] ?? [];
+
+                        // Process delivery statuses
+                        foreach ($value['statuses'] ?? [] as $status) {
+                            $this->processStatus($status);
+                        }
+                    }
+                }
+            }
+
+            return new Response('OK', 200);
+        }
+
         return new Response('OK', 200);
     }
 
@@ -56,5 +78,40 @@ class WebhookController extends AbstractController
         }
 
         return new Response($challenge, 200, ['Content-Type' => 'text/plain']);
+    }
+
+    /**
+     * Process a delivery status update from the Meta webhook.
+     *
+     * Logs the status for now; database updates will be wired later.
+     *
+     * @param array<string, mixed> $status
+     */
+    private function processStatus(array $status): void
+    {
+        $messageId  = $status['id'] ?? '';
+        $statusType = $status['status'] ?? '';
+
+        if (empty($messageId) || empty($statusType)) {
+            return;
+        }
+
+        $recipientId = $status['recipient_id'] ?? '';
+        $timestamp   = $status['timestamp'] ?? '';
+
+        $this->mauticLogger->info(
+            sprintf(
+                'WhatsApp webhook: status=%s, messageId=%s, recipientId=%s, timestamp=%s',
+                $statusType,
+                $messageId,
+                $recipientId,
+                $timestamp
+            )
+        );
+
+        // TODO: Find stat by wa_message_id and update:
+        // - status: sent -> delivered -> read
+        // - timestamps: dateDelivered, dateRead
+        // - message counters: deliveredCount, readCount
     }
 }
