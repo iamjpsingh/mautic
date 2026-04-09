@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Mautic\WhatsAppBundle\Integration\MetaCloud;
 
-use libphonenumber\NumberParseException;
-use libphonenumber\PhoneNumberFormat;
-use libphonenumber\PhoneNumberUtil;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\WhatsAppBundle\Exception\ConfigurationException;
 use Mautic\WhatsAppBundle\WhatsApp\TransportInterface;
@@ -224,19 +221,4 @@ class MetaCloudTransport implements TransportInterface
         return ltrim($cleaned, '+');
     }
 
-    /**
-     * Sanitize and format a phone number to E.164 without the leading "+".
-     * Meta Cloud API expects numbers without the + prefix.
-     *
-     * @throws NumberParseException
-     */
-    private function sanitizeNumber(string $number): string
-    {
-        $util   = PhoneNumberUtil::getInstance();
-        $parsed = $util->parse($number, 'US');
-        $e164   = $util->format($parsed, PhoneNumberFormat::E164);
-
-        // Meta API expects the number without the leading "+"
-        return ltrim($e164, '+');
-    }
 }

@@ -852,9 +852,10 @@ class WhatsAppController extends FormController
 
         foreach ($lists as $list) {
             // Get contact IDs from segment
+            $prefix = MAUTIC_TABLE_PREFIX;
             $contactIds = $model->getConnection()->fetchFirstColumn(
-                'SELECT DISTINCT l.id FROM leads l
-                 INNER JOIN lead_lists_leads lll ON l.id = lll.lead_id
+                'SELECT DISTINCT l.id FROM '.$prefix.'leads l
+                 INNER JOIN '.$prefix.'lead_lists_leads lll ON l.id = lll.lead_id
                  WHERE lll.leadlist_id = ? AND lll.manually_removed = 0 AND l.phone IS NOT NULL',
                 [$list->getId()]
             );

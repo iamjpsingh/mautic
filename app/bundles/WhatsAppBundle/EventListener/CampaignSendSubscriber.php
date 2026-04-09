@@ -130,7 +130,7 @@ class CampaignSendSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $result = $this->whatsAppModel->sendWhatsAppTemplate(
+        $result = $this->whatsAppModel->sendWhatsApp(
             $whatsapp,
             $lead,
             ['channel' => ['campaign.event', $event->getEvent()['id']]]

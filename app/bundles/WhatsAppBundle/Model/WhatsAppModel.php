@@ -364,7 +364,7 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                     $results[$stat->getLead()->getId()]['statId'] = $stat->getId();
                 }
 
-                $this->getRepository()->detachEntity($stat);
+                $this->em->detach($stat);
             }
         }
 
@@ -381,7 +381,7 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                 $lead,
                 $message->getTemplateName() ?? '',
                 $message->getTemplateLanguage() ?? 'en_US',
-                [], // Don't send synced template components — they're definitions, not send parameters
+                $this->buildTemplateSendComponents($message, $lead),
             ),
             WhatsAppMessage::MESSAGE_TYPE_MEDIA => $this->transport->sendMedia(
                 $lead,
@@ -395,6 +395,77 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
             ),
             default => $this->transport->sendText($lead, $processedContent), // session / text
         };
+    }
+
+    /**
+     * Build the components array for a template send request.
+     *
+     * Inspects the stored template components for variable placeholders (e.g. {{1}}, {{2}}).
+     * If variables are found, maps them to contact field values.
+     * Returns an empty array when the template has no parameters.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildTemplateSendComponents(WhatsAppMessage $message, Lead $lead): array
+    {
+        $storedComponents = $message->getTemplateComponents();
+
+        if (empty($storedComponents)) {
+            return [];
+        }
+
+        $sendComponents = [];
+
+        foreach ($storedComponents as $component) {
+            $type = $component['type'] ?? null;
+
+            if (null === $type) {
+                continue;
+            }
+
+            // Check BODY component text for variable placeholders like {{1}}, {{2}}
+            if ('BODY' === $type) {
+                $text = $component['text'] ?? '';
+                if (preg_match_all('/\{\{(\d+)\}\}/', $text, $matches)) {
+                    $parameters = [];
+                    foreach ($matches[1] as $index) {
+                        // Map parameters to contact fields; {{1}} -> firstname, others -> generic value
+                        $value = match ((int) $index) {
+                            1       => $lead->getFirstname() ?: 'Valued Customer',
+                            default => 'N/A',
+                        };
+                        $parameters[] = ['type' => 'text', 'text' => $value];
+                    }
+
+                    $sendComponents[] = [
+                        'type'       => 'body',
+                        'parameters' => $parameters,
+                    ];
+                }
+            }
+
+            // Check HEADER component for variable placeholders
+            if ('HEADER' === $type) {
+                $headerText = $component['text'] ?? '';
+                if (preg_match_all('/\{\{(\d+)\}\}/', $headerText, $matches)) {
+                    $parameters = [];
+                    foreach ($matches[1] as $index) {
+                        $value = match ((int) $index) {
+                            1       => $lead->getFirstname() ?: 'Valued Customer',
+                            default => 'N/A',
+                        };
+                        $parameters[] = ['type' => 'text', 'text' => $value];
+                    }
+
+                    $sendComponents[] = [
+                        'type'       => 'header',
+                        'parameters' => $parameters,
+                    ];
+                }
+            }
+        }
+
+        return $sendComponents;
     }
 
     /**
