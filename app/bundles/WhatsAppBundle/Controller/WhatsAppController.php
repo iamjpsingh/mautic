@@ -850,16 +850,20 @@ class WhatsAppController extends FormController
         $sentCount = 0;
         $failCount = 0;
 
-        /** @var \Mautic\LeadBundle\Model\ListModel $listModel */
-        $listModel = $this->getModel('lead.list');
+        $em = $model->getRepository()->getEntityManager();
 
         foreach ($lists as $list) {
-            $contacts = $listModel->getLeadsByList(['id' => $list->getId()], true);
-            $contactIds = $contacts[$list->getId()] ?? [];
+            // Get contact IDs from segment
+            $contactIds = $em->getConnection()->fetchFirstColumn(
+                'SELECT DISTINCT l.id FROM leads l
+                 INNER JOIN lead_lists_leads lll ON l.id = lll.lead_id
+                 WHERE lll.leadlist_id = ? AND lll.manually_removed = 0 AND l.phone IS NOT NULL',
+                [$list->getId()]
+            );
 
             foreach ($contactIds as $contactId) {
                 $contact = $this->getModel('lead')->getEntity($contactId);
-                if (!$contact || !$contact->getPhone()) {
+                if (!$contact) {
                     continue;
                 }
                 try {
