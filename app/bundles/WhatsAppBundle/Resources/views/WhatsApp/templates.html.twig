@@ -6,6 +6,10 @@
 
 {% block actions %}
     <div class="btn-group">
+        <a class="btn btn-primary btn-nospin" href="{{ path('mautic_whatsapp_create_template') }}">
+            <i class="ri-add-line"></i>
+            {{ 'mautic.whatsapp.template.create'|trans }}
+        </a>
         <a class="btn btn-default btn-nospin" onclick="Mautic.loadContent('{{ path('mautic_whatsapp_action', {'objectAction': 'syncTemplates'}) }}');">
             <i class="ri-refresh-line"></i>
             {{ 'mautic.whatsapp.template.sync_from_meta'|trans }}

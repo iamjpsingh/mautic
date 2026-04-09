@@ -21,6 +21,18 @@ class WebhookController extends AbstractController
     }
 
     /**
+     * Standalone webhook verification endpoint (GET only).
+     */
+    public function verifyAction(Request $request): Response
+    {
+        if (!defined('MAUTIC_NON_TRACKABLE_REQUEST')) {
+            define('MAUTIC_NON_TRACKABLE_REQUEST', 1);
+        }
+
+        return $this->handleVerification($request);
+    }
+
+    /**
      * Handles both GET (webhook verification) and POST (incoming messages/statuses).
      */
     public function callbackAction(Request $request, string $transport): Response

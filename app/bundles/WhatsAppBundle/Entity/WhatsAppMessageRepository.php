@@ -210,6 +210,10 @@ class WhatsAppMessageRepository extends CommonRepository
         $q = $this->createQueryBuilder('e');
         $q->select('partial e.{id, name, templateLanguage}');
 
+        // Only show published messages in dropdowns
+        $q->andWhere($q->expr()->eq('e.isPublished', ':published'))
+            ->setParameter('published', true);
+
         if (!empty($search)) {
             if (is_array($search)) {
                 $search = array_map('intval', $search);

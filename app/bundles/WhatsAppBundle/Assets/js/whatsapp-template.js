@@ -62,13 +62,17 @@ Mautic.whatsappLoadTemplatePreview = function (templateId) {
 };
 
 /**
- * Render the template preview panel.
+ * Render the template preview panel (WhatsApp-style green bubble).
  */
 Mautic.whatsappRenderPreview = function (data) {
     var panel = mQuery('#whatsapp-template-preview-panel');
 
     // Category badge
-    mQuery('#preview-category-badge').text(data.category || '').show();
+    if (data.category) {
+        mQuery('#preview-category-badge').text(data.category).show();
+    } else {
+        mQuery('#preview-category-badge').hide();
+    }
 
     // Header
     if (data.header) {
@@ -89,18 +93,36 @@ Mautic.whatsappRenderPreview = function (data) {
         mQuery('#preview-footer').addClass('hide');
     }
 
-    // Buttons
+    // Timestamp
+    var now = new Date();
+    var hours = now.getHours();
+    var mins = now.getMinutes();
+    mQuery('#preview-timestamp').text(
+        (hours < 10 ? '0' : '') + hours + ':' + (mins < 10 ? '0' : '') + mins
+    );
+
+    // Buttons (WhatsApp-style)
     if (data.buttons && data.buttons.length > 0) {
         var buttonHtml = '';
         for (var i = 0; i < data.buttons.length; i++) {
             var btn = data.buttons[i];
-            buttonHtml += '<span class="btn btn-sm btn-default" style="margin:2px">' +
-                (btn.text || btn.type || 'Button') + '</span>';
+            buttonHtml += '<div style="text-align:center;padding:6px 0;border-top:1px solid #dadde1;background:#fff;border-radius:' +
+                (i === data.buttons.length - 1 ? '0 0 8px 8px' : '0') + ';">' +
+                '<span style="color:#00a5f4;font-size:13px;">' +
+                Mautic.whatsappEscapeHtml(btn.text || btn.type || 'Button') + '</span></div>';
         }
         mQuery('#preview-buttons-list').html(buttonHtml);
         mQuery('#preview-buttons').removeClass('hide');
     } else {
         mQuery('#preview-buttons').addClass('hide');
+    }
+
+    // Also auto-fill hidden template name/language fields for form submission
+    if (data.name) {
+        mQuery('#whatsapp_templateName').val(data.name);
+    }
+    if (data.language) {
+        mQuery('#whatsapp_templateLanguage').val(data.language);
     }
 
     panel.removeClass('hide');
