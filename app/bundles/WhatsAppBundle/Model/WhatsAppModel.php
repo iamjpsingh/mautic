@@ -81,6 +81,11 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
         return $this->em->getRepository(WhatsAppTemplate::class)->find($templateId);
     }
 
+    public function getConnection(): \Doctrine\DBAL\Connection
+    {
+        return $this->em->getConnection();
+    }
+
     public function getPermissionBase(): string
     {
         return 'whatsapp:messages';
