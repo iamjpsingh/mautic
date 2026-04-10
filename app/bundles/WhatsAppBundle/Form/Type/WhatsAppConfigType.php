@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mautic\WhatsAppBundle\Form\Type;
 
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\WhatsAppBundle\Service\WebhookStatusTracker;
 use Mautic\WhatsAppBundle\WhatsApp\TransportChain;
 use Symfony\Component\Form\AbstractType;
@@ -26,6 +27,7 @@ class WhatsAppConfigType extends AbstractType
         private TransportChain $transportChain,
         private TranslatorInterface $translator,
         private WebhookStatusTracker $statusTracker,
+        private CoreParametersHelper $coreParametersHelper,
     ) {
     }
 
@@ -39,6 +41,11 @@ class WhatsAppConfigType extends AbstractType
         $tokenValue = $options['data']['whatsapp_webhook_verify_token'] ?? null;
         $tokenSet   = null !== $tokenValue && '' !== $tokenValue;
         $view->vars['webhook_state'] = $this->statusTracker->getState($tokenSet);
+
+        // Use the canonical public URL (site_url) so it works behind Cloudflare / Caddy / any reverse proxy
+        $siteUrl = (string) $this->coreParametersHelper->get('site_url');
+        $view->vars['webhook_public_url']     = $siteUrl;
+        $view->vars['webhook_public_url_set'] = '' !== $siteUrl;
     }
 
     /**

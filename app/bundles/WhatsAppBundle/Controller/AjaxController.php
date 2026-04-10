@@ -132,12 +132,19 @@ class AjaxController extends CommonAjaxController
             ]);
         }
 
-        // Build the public webhook URL from the current request host
-        $scheme      = $request->getScheme();
-        $host        = $request->getHttpHost();
-        $basePath    = $request->getBaseUrl();
-        $path        = $router->generate('mautic_whatsapp_webhook_callback', ['transport' => 'meta_cloud']);
-        $webhookUrl  = $scheme.'://'.$host.$basePath.$path;
+        // Prefer site_url (the canonical public URL set in System Settings) so we test what Meta actually reaches.
+        // Fall back to the current request host if site_url is not configured (dev mode).
+        $siteUrl = trim((string) $coreParametersHelper->get('site_url'), '/');
+
+        if ('' !== $siteUrl) {
+            $webhookUrl = $siteUrl.'/whatsapp/meta_cloud/callback';
+        } else {
+            $scheme     = $request->getScheme();
+            $host       = $request->getHttpHost();
+            $basePath   = $request->getBaseUrl();
+            $path       = $router->generate('mautic_whatsapp_webhook_callback', ['transport' => 'meta_cloud']);
+            $webhookUrl = $scheme.'://'.$host.$basePath.$path;
+        }
 
         // Meta-style challenge
         $challenge = 'mautic_selftest_'.bin2hex(random_bytes(8));

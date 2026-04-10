@@ -98,13 +98,32 @@
       {% endif %}
     </div>
 
+    {% set webhookPublicUrl    = form.vars.webhook_public_url|default('') %}
+    {% set webhookPublicUrlSet = form.vars.webhook_public_url_set|default(false) %}
+    {% set webhookBaseUrl      = webhookPublicUrlSet ? webhookPublicUrl|trim('/') : (app.request.schemeAndHttpHost) %}
+    {% set webhookFullUrl      = webhookBaseUrl ~ '/whatsapp/meta_cloud/callback' %}
+
+    {% if not webhookPublicUrlSet %}
+      <div class="alert alert-warning">
+        <i class="ri-error-warning-line"></i>
+        <strong>{{ 'mautic.whatsapp.config.webhook.site_url_missing'|trans }}</strong>
+        {{ 'mautic.whatsapp.config.webhook.site_url_missing.desc'|trans|raw }}
+      </div>
+    {% endif %}
+
     <div class="well">
       <div class="row">
         <div class="col-md-6">
           <p><strong>{{ 'mautic.whatsapp.config.webhook.url'|trans }}:</strong></p>
           <code style="display:block;padding:10px;background:#f5f5f5;border-radius:4px;margin-bottom:10px;word-break:break-all;">
-            {{ app.request.schemeAndHttpHost }}/whatsapp/meta_cloud/callback
+            {{ webhookFullUrl }}
           </code>
+          {% if not webhookPublicUrlSet %}
+            <p class="text-warning small">
+              <i class="ri-error-warning-line"></i>
+              {{ 'mautic.whatsapp.config.webhook.url_from_request_warning'|trans }}
+            </p>
+          {% endif %}
           <p><strong>{{ 'mautic.whatsapp.config.form.webhook_verify_token'|trans }}:</strong>
             <code>{{ form.whatsapp_webhook_verify_token.vars.value|default('— ' ~ 'mautic.whatsapp.config.webhook.not_set'|trans ~ ' —') }}</code>
           </p>
