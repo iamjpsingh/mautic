@@ -214,12 +214,11 @@ class WhatsAppController extends FormController
             }
         }
 
-        // Get failed count from stats
-        $failedCount = $model->getStatRepository()->getSentCount(null) > 0
-            ? $model->getConnection()->fetchOne(
-                'SELECT COUNT(*) FROM '.MAUTIC_TABLE_PREFIX.'whatsapp_message_stats WHERE whatsapp_message_id = ? AND is_failed = 1',
-                [$message->getId()]
-            ) : 0;
+        // Get failed count for this specific message
+        $failedCount = (int) $model->getConnection()->fetchOne(
+            'SELECT COUNT(*) FROM '.MAUTIC_TABLE_PREFIX.'whatsapp_message_stats WHERE whatsapp_message_id = ? AND is_failed = 1',
+            [$message->getId()]
+        );
 
         // Init the date range filter form
         $dateRangeValues = $request->query->all()['daterange'] ?? $request->request->all()['daterange'] ?? [];
@@ -1131,6 +1130,75 @@ class WhatsAppController extends FormController
         return $this->redirectToRoute('mautic_contact_action', [
             'objectAction' => 'view',
             'objectId'     => $contactId,
+        ]);
+    }
+
+    /**
+     * View a single WhatsApp template on a dedicated page (like email detail).
+     */
+    public function viewTemplateAction(int $id, WhatsAppTemplateRepository $templateRepository): Response
+    {
+        if (!$this->security->isGranted('whatsapp:messages:viewown') && !$this->security->isGranted('whatsapp:messages:viewother')) {
+            return $this->accessDenied();
+        }
+
+        $template = $templateRepository->find($id);
+
+        if (null === $template) {
+            $this->addFlashMessage('mautic.whatsapp.error.notfound', ['%id%' => $id], 'error');
+
+            return $this->redirectToRoute('mautic_whatsapp_templates');
+        }
+
+        // Extract components for the preview
+        $header     = null;
+        $body       = null;
+        $footer     = null;
+        $buttons    = [];
+        $parameters = [];
+
+        foreach ($template->getComponents() ?? [] as $component) {
+            $type = strtoupper($component['type'] ?? '');
+            switch ($type) {
+                case 'HEADER':
+                    $header = $component['text'] ?? '';
+                    break;
+                case 'BODY':
+                    $body = $component['text'] ?? '';
+                    break;
+                case 'FOOTER':
+                    $footer = $component['text'] ?? '';
+                    break;
+                case 'BUTTONS':
+                    $buttons = $component['buttons'] ?? [];
+                    break;
+            }
+        }
+
+        // Detect parameters {{N}} in header and body
+        $textForScan = ($header ?? '').' '.($body ?? '');
+        if (preg_match_all('/\{\{(\d+)\}\}/', $textForScan, $matches)) {
+            foreach (array_unique($matches[1]) as $num) {
+                $parameters[] = (int) $num;
+            }
+            sort($parameters);
+        }
+
+        return $this->delegateView([
+            'viewParameters' => [
+                'template'   => $template,
+                'header'     => $header,
+                'body'       => $body,
+                'footer'     => $footer,
+                'buttons'    => $buttons,
+                'parameters' => $parameters,
+            ],
+            'contentTemplate' => '@MauticWhatsApp/WhatsApp/template_view.html.twig',
+            'passthroughVars' => [
+                'activeLink'    => '#mautic_whatsapp_templates',
+                'mauticContent' => 'whatsapp_templates',
+                'route'         => $this->generateUrl('mautic_whatsapp_view_template', ['id' => $id]),
+            ],
         ]);
     }
 

@@ -77,6 +77,13 @@ return [
                 'path'       => '/whatsapp/templates/create',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::createTemplateAction',
             ],
+            'mautic_whatsapp_view_template' => [
+                'path'       => '/whatsapp/templates/view/{id}',
+                'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::viewTemplateAction',
+                'requirements' => [
+                    'id' => '\d+',
+                ],
+            ],
             'mautic_whatsapp_action' => [
                 'path'       => '/whatsapp/{objectAction}/{objectId}',
                 'controller' => 'Mautic\WhatsAppBundle\Controller\WhatsAppController::executeAction',

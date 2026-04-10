@@ -1,0 +1,166 @@
+{% extends '@MauticCore/Default/content.html.twig' %}
+
+{% block mauticContent %}whatsapp_templates{% endblock %}
+
+{% block headerTitle %}{{ template.getName() }}{% endblock %}
+
+{% block actions %}
+    <div class="btn-group">
+        <a class="btn btn-default" href="{{ path('mautic_whatsapp_templates') }}">
+            <i class="ri-arrow-left-line"></i> {{ 'mautic.whatsapp.templates.menu'|trans }}
+        </a>
+    </div>
+{% endblock %}
+
+{% block publishStatus %}
+    {% set statusBadgeClass = 'label-default' %}
+    {% if template.getStatus() == 'APPROVED' %}{% set statusBadgeClass = 'label-success' %}
+    {% elseif template.getStatus() == 'PENDING' %}{% set statusBadgeClass = 'label-warning' %}
+    {% elseif template.getStatus() == 'REJECTED' %}{% set statusBadgeClass = 'label-danger' %}
+    {% endif %}
+
+    {% set categoryBadgeClass = 'label-default' %}
+    {% if template.getCategory() == 'MARKETING' %}{% set categoryBadgeClass = 'label-primary' %}
+    {% elseif template.getCategory() == 'UTILITY' %}{% set categoryBadgeClass = 'label-info' %}
+    {% elseif template.getCategory() == 'AUTHENTICATION' %}{% set categoryBadgeClass = 'label-warning' %}
+    {% endif %}
+
+    <span class="label {{ statusBadgeClass }}">{{ template.getStatus() }}</span>
+    <div class="label__divider"></div>
+    <span class="label {{ categoryBadgeClass }}">{{ template.getCategory()|default('—') }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="box-layout">
+
+    <!-- Left: preview -->
+    <div class="col-md-7 col-lg-8 height-auto">
+        <div class="pa-md">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="ri-whatsapp-line"></i> {{ 'mautic.whatsapp.template.preview'|trans }}</h3>
+                </div>
+                <div class="panel-body" style="padding:24px;background:#111b21;">
+                    <!-- Phone-like mockup -->
+                    <div style="max-width:420px;margin:0 auto;background:#0b141a;border-radius:16px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+                        <!-- Chat header -->
+                        <div style="display:flex;align-items:center;padding:8px 4px 16px 4px;border-bottom:1px solid #1f2c33;">
+                            <div style="width:40px;height:40px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;">
+                                <i class="ri-building-line"></i>
+                            </div>
+                            <div style="margin-left:12px;">
+                                <div style="color:#e9edef;font-weight:600;font-size:14px;">Business Account</div>
+                                <div style="color:#8696a0;font-size:11px;">WhatsApp Business</div>
+                            </div>
+                        </div>
+
+                        <!-- Chat area -->
+                        <div style="padding:20px 8px;min-height:200px;">
+                            {{ include('@MauticWhatsApp/Helper/whatsapp_bubble.html.twig', {
+                                'header': header,
+                                'body': body,
+                                'footer': footer,
+                                'buttons': buttons,
+                            }) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if parameters|length > 0 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="ri-braces-line"></i> {{ 'mautic.whatsapp.template.parameters'|trans }}</h3>
+                </div>
+                <div class="panel-body">
+                    <p class="text-muted small">{{ 'mautic.whatsapp.template.parameters.help'|trans }}</p>
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:20%;">{{ 'mautic.whatsapp.template.parameter'|trans }}</th>
+                                <th>{{ 'mautic.whatsapp.template.parameter.usage'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in parameters %}
+                            <tr>
+                                <td><code>{{ '{{' ~ p ~ '}}' }}</code></td>
+                                <td class="text-muted">{{ 'mautic.whatsapp.template.parameter.map_hint'|trans }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if template.getComponents() %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a data-toggle="collapse" href="#raw-components" class="text-muted" style="text-decoration:none;">
+                        <i class="ri-code-s-slash-line"></i> {{ 'mautic.whatsapp.template.components_preview'|trans }}
+                        <i class="ri-arrow-down-s-line pull-right"></i>
+                    </a>
+                </div>
+                <div id="raw-components" class="collapse">
+                    <div class="panel-body">
+                        <pre style="max-height:400px;overflow:auto;font-size:11px;margin:0;">{{ template.getComponents()|json_encode(constant('JSON_PRETTY_PRINT'))|e }}</pre>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right: details -->
+    <div class="col-md-5 col-lg-4 height-auto bdr-l">
+        <div class="pa-md">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{{ 'mautic.core.details'|trans }}</h3>
+                </div>
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="fw-b" width="40%">{{ 'mautic.core.name'|trans }}</td>
+                            <td>{{ template.getName() }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-b">{{ 'mautic.whatsapp.template.status'|trans }}</td>
+                            <td>
+                                <span class="label {{ statusBadgeClass }}">{{ template.getStatus() }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-b">{{ 'mautic.whatsapp.template.category'|trans }}</td>
+                            <td>
+                                <span class="label {{ categoryBadgeClass }}">{{ template.getCategory()|default('—') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-b">{{ 'mautic.whatsapp.form.template_language'|trans }}</td>
+                            <td>{{ template.getLanguage() }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-b">{{ 'mautic.whatsapp.template.meta_id'|trans }}</td>
+                            <td><code style="font-size:11px;">{{ template.getMetaTemplateId()|default('—') }}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-b">{{ 'mautic.whatsapp.template.last_synced'|trans }}</td>
+                            <td>
+                                {% if template.getLastSyncedAt() %}
+                                    {{ template.getLastSyncedAt()|date('Y-m-d H:i') }}
+                                {% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-b">{{ 'mautic.whatsapp.template.parameters'|trans }}</td>
+                            <td>{{ parameters|length }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -185,6 +185,11 @@ class MetaCloudTransport implements TransportInterface
             if ($statusCode >= 200 && $statusCode < 300) {
                 $body = $response->toArray(false);
 
+                $this->logger->info('WhatsApp API send succeeded', [
+                    'status_code' => $statusCode,
+                    'response'    => $body,
+                ]);
+
                 // Return the Meta message ID (wamid) if available, for delivery tracking
                 $messages = $body['messages'] ?? [];
                 if (!empty($messages[0]['id'])) {

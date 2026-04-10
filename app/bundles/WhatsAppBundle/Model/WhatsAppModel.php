@@ -380,12 +380,32 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
         }
 
         if ($sentCount || $failedCount) {
+            // Persist stats BEFORE incrementing the counter so they stay in sync
+            try {
+                $this->getStatRepository()->saveEntities($stats);
+            } catch (\Throwable $e) {
+                $this->logger->error('WhatsApp: failed to save stats: '.$e->getMessage(), ['exception' => $e]);
+
+                // Flip every result to failed so the UI reflects reality
+                foreach ($stats as $stat) {
+                    $leadId = $stat->getLead()?->getId();
+                    if ($leadId && isset($results[$leadId])) {
+                        $results[$leadId]['sent']   = false;
+                        $results[$leadId]['status'] = 'Database error: '.$e->getMessage();
+                    }
+                }
+
+                return $results;
+            }
+
             $this->getRepository()->upCount($message->getId(), 'sent', $sentCount);
-            $this->getStatRepository()->saveEntities($stats);
 
             foreach ($stats as $stat) {
                 if (!$stat->isFailed()) {
-                    $results[$stat->getLead()->getId()]['statId'] = $stat->getId();
+                    $leadId = $stat->getLead()?->getId();
+                    if ($leadId) {
+                        $results[$leadId]['statId'] = $stat->getId();
+                    }
                 }
 
                 $this->em->detach($stat);
@@ -461,8 +481,14 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
         usort($mapping, fn ($a, $b) => ($a['param'] ?? 0) <=> ($b['param'] ?? 0));
 
         foreach ($mapping as $entry) {
-            $token      = $entry['token'] ?? '';
-            $value      = $this->resolveToken($token, $lead);
+            $token = $entry['token'] ?? '';
+            $value = $this->resolveToken($token, $lead);
+
+            // Meta API rejects empty parameter values — substitute a single hyphen
+            if ('' === $value) {
+                $value = '-';
+            }
+
             $parameters[] = ['type' => 'text', 'text' => $value];
         }
 
@@ -475,25 +501,35 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
 
     /**
      * Resolve a token string to an actual value using lead data.
+     *
+     * Supported tokens:
+     *   {contactfield=firstname}          — contact field, empty string if missing
+     *   {contactfield=firstname|Fallback} — contact field with explicit fallback
+     *   {datetime=now}                    — current datetime
+     *   anything else                     — returned as-is (plain text / custom value)
      */
     private function resolveToken(string $token, Lead $lead): string
     {
         // Contact field token: {contactfield=firstname} or {contactfield=firstname|Default}
         if (preg_match('/\{contactfield=(\w+)(?:\|(.+?))?\}/', $token, $matches)) {
-            $field   = $matches[1];
-            $default = $matches[2] ?? '';
-            $value   = $lead->getFieldValue($field);
+            $field    = $matches[1];
+            $fallback = $matches[2] ?? '';
+            $value    = $lead->getFieldValue($field);
 
-            return !empty($value) ? (string) $value : ($default ?: 'N/A');
+            if (null !== $value && '' !== (string) $value) {
+                return (string) $value;
+            }
+
+            return $fallback;
         }
 
         // DateTime token: {datetime=now}
-        if (preg_match('/\{datetime=(.+?)\}/', $token, $matches)) {
+        if (preg_match('/\{datetime=(.+?)\}/', $token)) {
             return (new \DateTime())->format('Y-m-d H:i');
         }
 
-        // Plain text value
-        return $token ?: 'N/A';
+        // Plain text / custom value — return as-is
+        return $token;
     }
 
     /**

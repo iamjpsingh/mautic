@@ -8,7 +8,6 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Mautic\ApiBundle\Serializer\Driver\ApiMetadataDriver;
 use Mautic\CoreBundle\Doctrine\Mapping\ClassMetadataBuilder;
-use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadList;
 
@@ -21,15 +20,13 @@ class WhatsAppStat
     public const STATUS_READ      = 'read';
     public const STATUS_FAILED    = 'failed';
 
-    private ?string $id = null;
+    private ?int $id = null;
 
     private ?WhatsAppMessage $whatsappMessage = null;
 
     private ?Lead $lead = null;
 
     private ?LeadList $list = null;
-
-    private ?IpAddress $ipAddress = null;
 
     private ?\DateTimeInterface $dateSent = null;
 
@@ -47,11 +44,6 @@ class WhatsAppStat
     private ?string $source = null;
 
     private ?int $sourceId = null;
-
-    /**
-     * @var array<string, mixed>
-     */
-    private array $tokens = [];
 
     /**
      * @var array<string, mixed>
@@ -75,24 +67,23 @@ class WhatsAppStat
             ->addIndex(['status'], 'stat_whatsapp_status_search')
             ->addIndex(['wa_message_id'], 'stat_whatsapp_wamid_search');
 
-        $builder->addBigIntIdField();
+        $builder->addId();
 
         $builder->createManyToOne('whatsappMessage', WhatsAppMessage::class)
             ->inversedBy('stats')
-            ->addJoinColumn('whatsapp_message_id', 'id', true, false, 'SET NULL')
+            ->addJoinColumn('whatsapp_message_id', 'id', false, false, 'CASCADE')
             ->build();
 
-        $builder->addLead(true, 'SET NULL');
+        $builder->createManyToOne('lead', Lead::class)
+            ->addJoinColumn('lead_id', 'id', false, false, 'CASCADE')
+            ->build();
 
         $builder->createManyToOne('list', LeadList::class)
             ->addJoinColumn('list_id', 'id', true, false, 'SET NULL')
             ->build();
 
-        $builder->addIpAddress(true);
-
         $builder->createField('dateSent', 'datetime')
             ->columnName('date_sent')
-            ->nullable()
             ->build();
 
         $builder->createField('dateDelivered', 'datetime')
@@ -118,7 +109,6 @@ class WhatsAppStat
 
         $builder->createField('isFailed', 'boolean')
             ->columnName('is_failed')
-            ->nullable()
             ->build();
 
         $builder->createField('status', 'string')
@@ -134,10 +124,6 @@ class WhatsAppStat
             ->nullable()
             ->build();
 
-        $builder->createField('tokens', 'array')
-            ->nullable()
-            ->build();
-
         $builder->addField('details', Types::JSON);
     }
 
@@ -147,7 +133,6 @@ class WhatsAppStat
             ->addProperties(
                 [
                     'id',
-                    'ipAddress',
                     'dateSent',
                     'dateDelivered',
                     'dateRead',
@@ -202,18 +187,6 @@ class WhatsAppStat
     public function setList(LeadList $list): self
     {
         $this->list = $list;
-
-        return $this;
-    }
-
-    public function getIpAddress(): ?IpAddress
-    {
-        return $this->ipAddress;
-    }
-
-    public function setIpAddress(IpAddress $ipAddress): self
-    {
-        $this->ipAddress = $ipAddress;
 
         return $this;
     }
@@ -298,24 +271,6 @@ class WhatsAppStat
     public function setSourceId(?int $sourceId): self
     {
         $this->sourceId = $sourceId;
-
-        return $this;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getTokens(): array
-    {
-        return $this->tokens;
-    }
-
-    /**
-     * @param array<string, mixed> $tokens
-     */
-    public function setTokens(array $tokens): self
-    {
-        $this->tokens = $tokens;
 
         return $this;
     }

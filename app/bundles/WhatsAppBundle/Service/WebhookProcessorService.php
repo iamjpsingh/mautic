@@ -19,14 +19,24 @@ class WebhookProcessorService
 
     public function processDeliveryStatus(string $waMessageId, string $status, string $timestamp): void
     {
+        $this->logger->info('WhatsApp webhook: looking up stat by wamid', [
+            'wamid'  => $waMessageId,
+            'status' => $status,
+        ]);
+
         $stat = $this->em->getRepository(WhatsAppStat::class)
             ->findOneBy(['whatsappMessageId' => $waMessageId]);
 
         if (null === $stat) {
-            $this->logger->debug('WhatsApp webhook: no stat found for message ID: '.$waMessageId);
+            $this->logger->warning('WhatsApp webhook: no stat found for wamid', ['wamid' => $waMessageId]);
 
             return;
         }
+
+        $this->logger->info('WhatsApp webhook: found stat, updating status', [
+            'stat_id' => $stat->getId(),
+            'status'  => $status,
+        ]);
 
         $dateTime = !empty($timestamp)
             ? (new \DateTime())->setTimestamp((int) $timestamp)

@@ -48,7 +48,10 @@ class WebhookController extends AbstractController
 
         // Handle incoming POST (messages + status updates)
         if ($request->isMethod('POST')) {
-            $payload = json_decode($request->getContent(), true);
+            $rawBody = $request->getContent();
+            $this->mauticLogger->info('WhatsApp webhook POST received', ['body' => $rawBody]);
+
+            $payload = json_decode($rawBody, true);
 
             if (is_array($payload)) {
                 // Process status updates
@@ -103,17 +106,17 @@ class WebhookController extends AbstractController
         $messageId  = $status['id'] ?? '';
         $statusType = $status['status'] ?? '';
 
+        $this->mauticLogger->info('WhatsApp webhook status received', [
+            'payload' => $status,
+        ]);
+
         if (empty($messageId) || empty($statusType)) {
+            $this->mauticLogger->warning('WhatsApp webhook: missing id or status in payload', ['payload' => $status]);
+
             return;
         }
 
         $timestamp = $status['timestamp'] ?? '';
-
-        $this->mauticLogger->info(sprintf(
-            'WhatsApp webhook: status=%s, messageId=%s',
-            $statusType,
-            $messageId
-        ));
 
         $this->webhookProcessor->processDeliveryStatus($messageId, $statusType, $timestamp);
     }
