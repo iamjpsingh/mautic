@@ -270,46 +270,43 @@
             <div class="panel-heading">
                 <h3 class="panel-title">{{ 'mautic.whatsapp.preview'|trans }}</h3>
             </div>
-            <div class="panel-body">
+            <div class="panel-body" style="padding:0;">
                 {% if 'template' == messageType %}
-                    <div class="well well-sm">
-                        <strong>{{ 'mautic.whatsapp.template.name'|trans }}:</strong> {{ whatsapp.getTemplateName() }}<br>
-                        <strong>{{ 'mautic.whatsapp.template.language'|trans }}:</strong> {{ whatsapp.getTemplateLanguage() }}
+                    <div class="pa-sm" style="background:#ededed;border-bottom:1px solid #ddd;">
+                        <small class="text-muted">
+                            <strong>{{ 'mautic.whatsapp.template.name'|trans }}:</strong> {{ whatsapp.getTemplateName() }}<br>
+                            <strong>{{ 'mautic.whatsapp.template.language'|trans }}:</strong> {{ whatsapp.getTemplateLanguage() }}
+                        </small>
                     </div>
-                    {% if templateHeader is defined and templateHeader %}
-                        <div class="pa-sm mb-xs" style="font-weight: bold; font-size: 14px;">
-                            {{ templateHeader }}
-                        </div>
-                    {% endif %}
-                    {% if templateBody is defined and templateBody %}
-                        <div class="whatsapp-message-preview pa-sm mb-xs" style="background-color: #dcf8c6; border-radius: 8px;">
-                            {{ templateBody|nl2br }}
-                        </div>
-                    {% endif %}
-                    {% if templateFooter is defined and templateFooter %}
-                        <div class="pa-sm mb-xs text-muted" style="font-size: 12px;">
-                            {{ templateFooter }}
-                        </div>
-                    {% endif %}
-                    {% if templateButtons is defined and templateButtons %}
-                        <div class="pa-sm">
-                            {% for button in templateButtons %}
-                                <span class="label label-default mr-xs">{{ button.text|default('Button') }}</span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ include('@MauticWhatsApp/Helper/whatsapp_bubble.html.twig', {
+                        'header': templateHeader,
+                        'body': templateBody,
+                        'footer': templateFooter,
+                        'buttons': templateButtons,
+                    }) }}
                 {% elseif 'media' == messageType %}
-                    <div class="well well-sm">
+                    <div class="pa-sm">
                         <strong>{{ 'mautic.whatsapp.media.type'|trans }}:</strong> {{ whatsapp.getMediaType() }}<br>
                         {% if whatsapp.getMediaUrl() %}
-                            <strong>{{ 'mautic.whatsapp.media.url'|trans }}:</strong> {{ whatsapp.getMediaUrl() }}
+                            <strong>{{ 'mautic.whatsapp.media.url'|trans }}:</strong>
+                            <a href="{{ whatsapp.getMediaUrl() }}" target="_blank">{{ whatsapp.getMediaUrl()|slice(0, 40) }}...</a>
                         {% endif %}
                     </div>
-                {% endif %}
-                {% if whatsapp.getMessage() %}
-                    <div class="whatsapp-message-preview pa-sm" style="background-color: #dcf8c6; border-radius: 8px;">
-                        {{ whatsapp.getMessage()|purify }}
-                    </div>
+                    {% if whatsapp.getMessage() %}
+                        {{ include('@MauticWhatsApp/Helper/whatsapp_bubble.html.twig', {
+                            'body': whatsapp.getMessage(),
+                        }) }}
+                    {% endif %}
+                {% elseif 'session' == messageType %}
+                    {{ include('@MauticWhatsApp/Helper/whatsapp_bubble.html.twig', {
+                        'body': whatsapp.getMessage(),
+                    }) }}
+                {% else %}
+                    {% if whatsapp.getMessage() %}
+                        {{ include('@MauticWhatsApp/Helper/whatsapp_bubble.html.twig', {
+                            'body': whatsapp.getMessage(),
+                        }) }}
+                    {% endif %}
                 {% endif %}
             </div>
         </div>

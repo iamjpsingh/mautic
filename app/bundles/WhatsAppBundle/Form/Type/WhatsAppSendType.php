@@ -40,9 +40,10 @@ class WhatsAppSendType extends AbstractType
                     'tooltip'  => 'mautic.whatsapp.campaign.send_message.tooltip',
                     'onchange' => 'Mautic.disabledWhatsAppAction()',
                 ],
-                'multiple'    => false,
-                'required'    => true,
-                'constraints' => [
+                'multiple'     => false,
+                'required'     => true,
+                'message_type' => 'session',
+                'constraints'  => [
                     new NotBlank(
                         ['message' => 'mautic.whatsapp.campaign.choosemessage.notblank']
                     ),
@@ -57,6 +58,7 @@ class WhatsAppSendType extends AbstractType
                     'objectAction' => 'new',
                     'contentOnly'  => 1,
                     'updateSelect' => $options['update_select'],
+                    'messageType'  => 'session',
                 ]
             );
 

@@ -770,12 +770,10 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                     $options['ignore_ids'] ?? [],
                 );
 
+                // Return a flat list — no grouping by language (which looked ugly in dropdowns)
                 foreach ($entities as $entity) {
-                    $lang = $entity['templateLanguage'] ?? 'en';
-                    $results[$lang][$entity['id']] = $entity['name'];
+                    $results[$entity['id']] = $entity['name'];
                 }
-
-                ksort($results);
 
                 break;
         }

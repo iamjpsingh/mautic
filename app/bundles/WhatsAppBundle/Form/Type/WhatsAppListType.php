@@ -28,21 +28,26 @@ class WhatsAppListType extends AbstractType
                     'limit'   => 0,
                     'start'   => 0,
                     'options' => [
-                        'ignore_ids' => $options['ignore_ids'],
+                        'message_type' => $options['message_type'],
+                        'ignore_ids'   => $options['ignore_ids'],
                     ],
                 ],
                 'ajax_lookup_action' => function (Options $options): string {
                     $query = [
-                        'ignore_ids' => $options['ignore_ids'],
+                        'message_type' => $options['message_type'],
+                        'ignore_ids'   => $options['ignore_ids'],
                     ];
 
                     return 'whatsapp:getLookupChoiceList&'.http_build_query($query);
                 },
-                'multiple'   => false,
-                'required'   => false,
-                'ignore_ids' => [],
+                'multiple'     => false,
+                'required'     => false,
+                'message_type' => null,
+                'ignore_ids'   => [],
             ]
         );
+
+        $resolver->setAllowedTypes('message_type', ['null', 'string']);
     }
 
     public function getParent(): ?string

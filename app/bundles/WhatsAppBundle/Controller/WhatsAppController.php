@@ -308,7 +308,17 @@ class WhatsAppController extends FormController
             : $request->get('updateSelect', false);
 
         if ($updateSelect) {
-            $entity->setMessageType('template');
+            // Default to template; allow override via ?messageType= query param from campaign action
+            $requestedType = InputHelper::clean($request->get('messageType', 'template'));
+            if (!in_array($requestedType, [
+                WhatsAppMessage::MESSAGE_TYPE_TEMPLATE,
+                WhatsAppMessage::MESSAGE_TYPE_SESSION,
+                WhatsAppMessage::MESSAGE_TYPE_MEDIA,
+                WhatsAppMessage::MESSAGE_TYPE_INTERACTIVE,
+            ], true)) {
+                $requestedType = WhatsAppMessage::MESSAGE_TYPE_TEMPLATE;
+            }
+            $entity->setMessageType($requestedType);
         }
 
         // create the form

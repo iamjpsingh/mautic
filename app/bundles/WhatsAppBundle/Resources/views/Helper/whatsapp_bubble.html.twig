@@ -1,0 +1,60 @@
+{#
+  Reusable WhatsApp-style message bubble.
+
+  Variables:
+  - header  (optional) Header text
+  - body    (optional) Body text
+  - footer  (optional) Footer text
+  - buttons (optional) Array of {text, type, url}
+  - category (optional) Template category label (e.g. UTILITY)
+#}
+{% set _header  = header|default('') %}
+{% set _body    = body|default('') %}
+{% set _footer  = footer|default('') %}
+{% set _buttons = buttons|default([]) %}
+{% set _category = category|default('') %}
+
+<div class="whatsapp-preview-container" style="background:#e5ddd5;padding:16px;border-radius:6px;">
+  {% if _category %}
+    <div style="text-align:right;margin-bottom:8px;">
+      <span class="label label-success">{{ _category }}</span>
+    </div>
+  {% endif %}
+  <div style="display:flex;justify-content:flex-end;">
+    <div style="background:#dcf8c6;border-radius:8px;padding:10px 14px;max-width:85%;box-shadow:0 1px 1px rgba(0,0,0,.13);position:relative;">
+      {% if _header %}
+        <div style="font-weight:bold;font-size:14px;margin-bottom:6px;color:#303030;">
+          {{ _header }}
+        </div>
+      {% endif %}
+      {% if _body %}
+        <div style="white-space:pre-wrap;font-size:13px;color:#303030;line-height:1.4;">{{ _body }}</div>
+      {% endif %}
+      {% if _footer %}
+        <div style="font-size:11px;color:#8c8c8c;margin-top:4px;">
+          {{ _footer }}
+        </div>
+      {% endif %}
+      <div style="text-align:right;margin-top:2px;">
+        <span style="font-size:10px;color:#8c8c8c;">{{ 'now'|date('H:i') }}</span>
+        <i class="ri-check-double-line" style="color:#4fc3f7;font-size:12px;margin-left:2px;"></i>
+      </div>
+    </div>
+  </div>
+  {% if _buttons|length > 0 %}
+    <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+      <div style="max-width:85%;width:100%;">
+        {% for button in _buttons %}
+          <div style="background:#fff;border-radius:8px;padding:8px;text-align:center;margin-top:4px;box-shadow:0 1px 1px rgba(0,0,0,.13);">
+            <span style="color:#00a5f4;font-size:13px;font-weight:500;">
+              {% if button.type|default('') == 'URL' %}<i class="ri-external-link-line"></i>
+              {% elseif button.type|default('') == 'PHONE_NUMBER' %}<i class="ri-phone-line"></i>
+              {% else %}<i class="ri-reply-line"></i>{% endif %}
+              {{ button.text|default(button.type|default('Button')) }}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
