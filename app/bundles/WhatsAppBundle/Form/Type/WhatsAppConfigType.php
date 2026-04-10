@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Mautic\WhatsAppBundle\Form\Type;
 
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
+use Mautic\WhatsAppBundle\Service\WebhookStatusTracker;
 use Mautic\WhatsAppBundle\WhatsApp\TransportChain;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -22,7 +25,20 @@ class WhatsAppConfigType extends AbstractType
     public function __construct(
         private TransportChain $transportChain,
         private TranslatorInterface $translator,
+        private WebhookStatusTracker $statusTracker,
     ) {
+    }
+
+    /**
+     * @param FormView<array<mixed>|null> $view
+     * @param FormInterface<array<mixed>|null> $form
+     * @param array<string, mixed> $options
+     */
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        $tokenValue = $options['data']['whatsapp_webhook_verify_token'] ?? null;
+        $tokenSet   = null !== $tokenValue && '' !== $tokenValue;
+        $view->vars['webhook_state'] = $this->statusTracker->getState($tokenSet);
     }
 
     /**

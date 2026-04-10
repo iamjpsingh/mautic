@@ -343,3 +343,106 @@ Mautic.disabledWhatsAppAction = function (opener) {
     opener.mQuery('#campaignevent_properties_editWhatsAppButton').prop('disabled', disabled);
     opener.mQuery('#campaignevent_properties_editWhatsAppTemplateButton').prop('disabled', disabled);
 };
+
+// ============================================================================
+// Webhook self-test (config page)
+// ============================================================================
+
+Mautic.whatsappTestWebhook = function () {
+    var btn = mQuery('#whatsapp-test-webhook-btn');
+    var result = mQuery('#whatsapp-test-webhook-result');
+
+    btn.prop('disabled', true);
+    btn.html('<i class="ri-loader-line ri-spin"></i> Testing...');
+    result.html('');
+
+    mQuery.ajax({
+        url: mauticAjaxUrl + '?action=whatsapp:testWebhook',
+        type: 'POST',
+        dataType: 'json',
+        success: function (response) {
+            btn.prop('disabled', false);
+            btn.html('<i class="ri-plug-line"></i> Test Connection');
+
+            var html = '';
+            if (response.status === 'ok') {
+                html = '<div class="alert alert-success">'
+                    + '<i class="ri-checkbox-circle-line"></i> <strong>Success!</strong> '
+                    + Mautic.whatsappEscapeHtml(response.reason || '')
+                    + '</div>';
+            } else {
+                html = '<div class="alert alert-danger">'
+                    + '<i class="ri-close-circle-line"></i> <strong>Broken:</strong> '
+                    + Mautic.whatsappEscapeHtml(response.reason || 'Unknown error');
+
+                if (response.details) {
+                    html += '<pre style="margin-top:10px;max-height:200px;overflow:auto;font-size:11px;background:#fff;">';
+                    html += Mautic.whatsappEscapeHtml(JSON.stringify(response.details, null, 2));
+                    html += '</pre>';
+                }
+
+                html += '</div>';
+            }
+
+            result.html(html);
+
+            // Refresh the status panel if state was returned
+            if (response.state) {
+                Mautic.whatsappUpdateWebhookStatusPanel(response.state);
+            }
+        },
+        error: function (xhr) {
+            btn.prop('disabled', false);
+            btn.html('<i class="ri-plug-line"></i> Test Connection');
+            result.html(
+                '<div class="alert alert-danger">'
+                + '<i class="ri-close-circle-line"></i> <strong>Request failed:</strong> '
+                + Mautic.whatsappEscapeHtml(xhr.statusText || 'Unknown error')
+                + '</div>'
+            );
+        }
+    });
+};
+
+Mautic.whatsappUpdateWebhookStatusPanel = function (state) {
+    var panel = mQuery('#whatsapp-webhook-status-panel');
+    if (!panel.length || !state) return;
+
+    var alertClass = 'alert-danger';
+    var icon = 'ri-close-circle-line';
+    var label = 'Broken';
+    var desc = '';
+
+    if (state.status === 'active') {
+        alertClass = 'alert-success';
+        icon = 'ri-checkbox-circle-line';
+        label = 'Active';
+        desc = 'Receiving webhooks normally';
+    } else if (state.status === 'idle') {
+        alertClass = 'alert-warning';
+        icon = 'ri-time-line';
+        label = 'Verified — Idle';
+        desc = 'Verified but no recent activity';
+    } else if (state.status === 'pending') {
+        alertClass = 'alert-warning';
+        icon = 'ri-error-warning-line';
+        label = 'Pending Verification';
+        desc = 'Token set but Meta has not verified yet';
+    } else if (state.status === 'error') {
+        alertClass = 'alert-danger';
+        icon = 'ri-close-circle-line';
+        label = 'Broken';
+        desc = state.last_error || 'Webhook is not responding correctly';
+    } else {
+        alertClass = 'alert-danger';
+        icon = 'ri-close-circle-line';
+        label = 'Not Configured';
+        desc = 'Set a verify token and save';
+    }
+
+    panel.html(
+        '<div class="alert ' + alertClass + '">'
+        + '<i class="' + icon + '"></i> <strong>' + label + '</strong> — ' + Mautic.whatsappEscapeHtml(desc)
+        + '</div>'
+    );
+};

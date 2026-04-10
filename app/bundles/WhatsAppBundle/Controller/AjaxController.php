@@ -6,9 +6,13 @@ namespace Mautic\WhatsAppBundle\Controller;
 
 use Mautic\CoreBundle\Controller\AjaxController as CommonAjaxController;
 use Mautic\CoreBundle\Controller\AjaxLookupControllerTrait;
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\WhatsAppBundle\Model\WhatsAppModel;
+use Mautic\WhatsAppBundle\Service\WebhookStatusTracker;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AjaxController extends CommonAjaxController
 {
@@ -104,5 +108,98 @@ class AjaxController extends CommonAjaxController
         }
 
         return new JsonResponse($data);
+    }
+
+    /**
+     * Test the WhatsApp webhook by issuing a self-request to the public verify URL.
+     * This catches cases where Cloudflare / DNS / SSL prevents Meta from reaching us.
+     */
+    public function testWebhookAction(
+        Request $request,
+        CoreParametersHelper $coreParametersHelper,
+        RouterInterface $router,
+        HttpClientInterface $httpClient,
+        WebhookStatusTracker $statusTracker,
+    ): JsonResponse {
+        $verifyToken = (string) $coreParametersHelper->get('whatsapp_webhook_verify_token');
+
+        if ('' === $verifyToken) {
+            return new JsonResponse([
+                'status'  => 'broken',
+                'reason'  => 'No webhook verify token is configured. Enter one above and save.',
+                'details' => null,
+                'state'   => $statusTracker->getState(false),
+            ]);
+        }
+
+        // Build the public webhook URL from the current request host
+        $scheme      = $request->getScheme();
+        $host        = $request->getHttpHost();
+        $basePath    = $request->getBaseUrl();
+        $path        = $router->generate('mautic_whatsapp_webhook_callback', ['transport' => 'meta_cloud']);
+        $webhookUrl  = $scheme.'://'.$host.$basePath.$path;
+
+        // Meta-style challenge
+        $challenge = 'mautic_selftest_'.bin2hex(random_bytes(8));
+        $testUrl   = $webhookUrl.'?hub_mode=subscribe&hub_verify_token='.urlencode($verifyToken).'&hub_challenge='.urlencode($challenge);
+
+        try {
+            $response = $httpClient->request('GET', $testUrl, [
+                'timeout'           => 10,
+                'max_redirects'     => 3,
+                'verify_peer'       => false,
+                'verify_host'       => false,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $body       = $response->getContent(false);
+
+            if (200 === $statusCode && trim($body) === $challenge) {
+                return new JsonResponse([
+                    'status'  => 'ok',
+                    'reason'  => 'Webhook is reachable and returned the correct challenge.',
+                    'details' => [
+                        'url'         => $webhookUrl,
+                        'status_code' => $statusCode,
+                    ],
+                    'state' => $statusTracker->getState(true),
+                ]);
+            }
+
+            if (200 === $statusCode) {
+                return new JsonResponse([
+                    'status'  => 'broken',
+                    'reason'  => 'Webhook returned 200 but the challenge response did not match. Another app may be intercepting the request.',
+                    'details' => [
+                        'url'              => $webhookUrl,
+                        'status_code'      => $statusCode,
+                        'expected'         => $challenge,
+                        'received_preview' => substr($body, 0, 200),
+                    ],
+                    'state' => $statusTracker->getState(true),
+                ]);
+            }
+
+            return new JsonResponse([
+                'status'  => 'broken',
+                'reason'  => sprintf('Webhook returned HTTP %d. Check that Cloudflare / your reverse proxy forwards to Mautic.', $statusCode),
+                'details' => [
+                    'url'         => $webhookUrl,
+                    'status_code' => $statusCode,
+                    'body'        => substr($body, 0, 200),
+                ],
+                'state' => $statusTracker->getState(true),
+            ]);
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'status'  => 'broken',
+                'reason'  => 'Could not reach the webhook URL: '.$e->getMessage(),
+                'details' => [
+                    'url'       => $webhookUrl,
+                    'exception' => $e::class,
+                ],
+                'state' => $statusTracker->getState(true),
+            ]);
+        }
     }
 }
