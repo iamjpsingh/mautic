@@ -120,7 +120,10 @@ class AjaxController extends CommonAjaxController
         RouterInterface $router,
         HttpClientInterface $httpClient,
         WebhookStatusTracker $statusTracker,
+        \Psr\Log\LoggerInterface $logger,
     ): JsonResponse {
+        $logger->info('WhatsApp: testWebhookAction invoked');
+
         $verifyToken = (string) $coreParametersHelper->get('whatsapp_webhook_verify_token');
 
         if ('' === $verifyToken) {
@@ -132,8 +135,7 @@ class AjaxController extends CommonAjaxController
             ]);
         }
 
-        // Prefer site_url (the canonical public URL set in System Settings) so we test what Meta actually reaches.
-        // Fall back to the current request host if site_url is not configured (dev mode).
+        // Prefer site_url (canonical public URL) so we test what Meta actually reaches.
         $siteUrl = trim((string) $coreParametersHelper->get('site_url'), '/');
 
         if ('' !== $siteUrl) {
@@ -150,16 +152,26 @@ class AjaxController extends CommonAjaxController
         $challenge = 'mautic_selftest_'.bin2hex(random_bytes(8));
         $testUrl   = $webhookUrl.'?hub_mode=subscribe&hub_verify_token='.urlencode($verifyToken).'&hub_challenge='.urlencode($challenge);
 
+        $logger->info('WhatsApp: test webhook url built', ['url' => $webhookUrl]);
+
         try {
             $response = $httpClient->request('GET', $testUrl, [
-                'timeout'           => 10,
+                'timeout'           => 15,
                 'max_redirects'     => 3,
                 'verify_peer'       => false,
                 'verify_host'       => false,
+                'headers'           => [
+                    'User-Agent' => 'Mautic-WhatsApp-SelfTest/1.0',
+                ],
             ]);
 
             $statusCode = $response->getStatusCode();
             $body       = $response->getContent(false);
+
+            $logger->info('WhatsApp: test webhook response', [
+                'status' => $statusCode,
+                'body'   => substr($body, 0, 500),
+            ]);
 
             if (200 === $statusCode && trim($body) === $challenge) {
                 return new JsonResponse([
@@ -176,12 +188,12 @@ class AjaxController extends CommonAjaxController
             if (200 === $statusCode) {
                 return new JsonResponse([
                     'status'  => 'broken',
-                    'reason'  => 'Webhook returned 200 but the challenge response did not match. Another app may be intercepting the request.',
+                    'reason'  => 'Webhook returned 200 but the challenge response did not match. Check the response body below — another app may be intercepting, or Mautic is returning an HTML error page.',
                     'details' => [
                         'url'              => $webhookUrl,
                         'status_code'      => $statusCode,
                         'expected'         => $challenge,
-                        'received_preview' => substr($body, 0, 200),
+                        'received_preview' => substr($body, 0, 500),
                     ],
                     'state' => $statusTracker->getState(true),
                 ]);
@@ -189,21 +201,34 @@ class AjaxController extends CommonAjaxController
 
             return new JsonResponse([
                 'status'  => 'broken',
-                'reason'  => sprintf('Webhook returned HTTP %d. Check that Cloudflare / your reverse proxy forwards to Mautic.', $statusCode),
+                'reason'  => sprintf('Webhook returned HTTP %d. This usually means Cloudflare/WAF is blocking the request, or the URL is wrong.', $statusCode),
                 'details' => [
                     'url'         => $webhookUrl,
                     'status_code' => $statusCode,
-                    'body'        => substr($body, 0, 200),
+                    'body'        => substr($body, 0, 500),
                 ],
                 'state' => $statusTracker->getState(true),
             ]);
         } catch (\Throwable $e) {
+            $logger->error('WhatsApp: test webhook threw exception', [
+                'exception' => $e::class,
+                'message'   => $e->getMessage(),
+                'trace'     => $e->getTraceAsString(),
+            ]);
+
+            $message = $e->getMessage();
+            if ('' === $message) {
+                $message = $e::class.' (no message)';
+            }
+
             return new JsonResponse([
                 'status'  => 'broken',
-                'reason'  => 'Could not reach the webhook URL: '.$e->getMessage(),
+                'reason'  => 'Could not reach the webhook URL: '.$message,
                 'details' => [
                     'url'       => $webhookUrl,
+                    'test_url'  => $testUrl,
                     'exception' => $e::class,
+                    'message'   => $message,
                 ],
                 'state' => $statusTracker->getState(true),
             ]);
