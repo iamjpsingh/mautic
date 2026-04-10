@@ -1186,12 +1186,12 @@ class WhatsAppController extends FormController
 
         return $this->delegateView([
             'viewParameters' => [
-                'template'   => $template,
-                'header'     => $header,
-                'body'       => $body,
-                'footer'     => $footer,
-                'buttons'    => $buttons,
-                'parameters' => $parameters,
+                'whatsappTemplate' => $template,
+                'header'           => $header,
+                'body'             => $body,
+                'footer'           => $footer,
+                'buttons'          => $buttons,
+                'parameters'       => $parameters,
             ],
             'contentTemplate' => '@MauticWhatsApp/WhatsApp/template_view.html.twig',
             'passthroughVars' => [

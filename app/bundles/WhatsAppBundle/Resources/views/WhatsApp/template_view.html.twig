@@ -2,7 +2,7 @@
 
 {% block mauticContent %}whatsapp_templates{% endblock %}
 
-{% block headerTitle %}{{ template.getName() }}{% endblock %}
+{% block headerTitle %}{{ whatsappTemplate.getName() }}{% endblock %}
 
 {% block actions %}
     <div class="btn-group">
@@ -14,20 +14,20 @@
 
 {% block publishStatus %}
     {% set statusBadgeClass = 'label-default' %}
-    {% if template.getStatus() == 'APPROVED' %}{% set statusBadgeClass = 'label-success' %}
-    {% elseif template.getStatus() == 'PENDING' %}{% set statusBadgeClass = 'label-warning' %}
-    {% elseif template.getStatus() == 'REJECTED' %}{% set statusBadgeClass = 'label-danger' %}
+    {% if whatsappTemplate.getStatus() == 'APPROVED' %}{% set statusBadgeClass = 'label-success' %}
+    {% elseif whatsappTemplate.getStatus() == 'PENDING' %}{% set statusBadgeClass = 'label-warning' %}
+    {% elseif whatsappTemplate.getStatus() == 'REJECTED' %}{% set statusBadgeClass = 'label-danger' %}
     {% endif %}
 
     {% set categoryBadgeClass = 'label-default' %}
-    {% if template.getCategory() == 'MARKETING' %}{% set categoryBadgeClass = 'label-primary' %}
-    {% elseif template.getCategory() == 'UTILITY' %}{% set categoryBadgeClass = 'label-info' %}
-    {% elseif template.getCategory() == 'AUTHENTICATION' %}{% set categoryBadgeClass = 'label-warning' %}
+    {% if whatsappTemplate.getCategory() == 'MARKETING' %}{% set categoryBadgeClass = 'label-primary' %}
+    {% elseif whatsappTemplate.getCategory() == 'UTILITY' %}{% set categoryBadgeClass = 'label-info' %}
+    {% elseif whatsappTemplate.getCategory() == 'AUTHENTICATION' %}{% set categoryBadgeClass = 'label-warning' %}
     {% endif %}
 
-    <span class="label {{ statusBadgeClass }}">{{ template.getStatus() }}</span>
+    <span class="label {{ statusBadgeClass }}">{{ whatsappTemplate.getStatus() }}</span>
     <div class="label__divider"></div>
-    <span class="label {{ categoryBadgeClass }}">{{ template.getCategory()|default('—') }}</span>
+    <span class="label {{ categoryBadgeClass }}">{{ whatsappTemplate.getCategory()|default('—') }}</span>
 {% endblock %}
 
 {% block content %}
@@ -94,7 +94,7 @@
             </div>
             {% endif %}
 
-            {% if template.getComponents() %}
+            {% if whatsappTemplate.getComponents() %}
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <a data-toggle="collapse" href="#raw-components" class="text-muted" style="text-decoration:none;">
@@ -104,7 +104,7 @@
                 </div>
                 <div id="raw-components" class="collapse">
                     <div class="panel-body">
-                        <pre style="max-height:400px;overflow:auto;font-size:11px;margin:0;">{{ template.getComponents()|json_encode(constant('JSON_PRETTY_PRINT'))|e }}</pre>
+                        <pre style="max-height:400px;overflow:auto;font-size:11px;margin:0;">{{ whatsappTemplate.getComponents()|json_encode(constant('JSON_PRETTY_PRINT'))|e }}</pre>
                     </div>
                 </div>
             </div>
@@ -123,33 +123,33 @@
                     <tbody>
                         <tr>
                             <td class="fw-b" width="40%">{{ 'mautic.core.name'|trans }}</td>
-                            <td>{{ template.getName() }}</td>
+                            <td>{{ whatsappTemplate.getName() }}</td>
                         </tr>
                         <tr>
                             <td class="fw-b">{{ 'mautic.whatsapp.template.status'|trans }}</td>
                             <td>
-                                <span class="label {{ statusBadgeClass }}">{{ template.getStatus() }}</span>
+                                <span class="label {{ statusBadgeClass }}">{{ whatsappTemplate.getStatus() }}</span>
                             </td>
                         </tr>
                         <tr>
                             <td class="fw-b">{{ 'mautic.whatsapp.template.category'|trans }}</td>
                             <td>
-                                <span class="label {{ categoryBadgeClass }}">{{ template.getCategory()|default('—') }}</span>
+                                <span class="label {{ categoryBadgeClass }}">{{ whatsappTemplate.getCategory()|default('—') }}</span>
                             </td>
                         </tr>
                         <tr>
                             <td class="fw-b">{{ 'mautic.whatsapp.form.template_language'|trans }}</td>
-                            <td>{{ template.getLanguage() }}</td>
+                            <td>{{ whatsappTemplate.getLanguage() }}</td>
                         </tr>
                         <tr>
                             <td class="fw-b">{{ 'mautic.whatsapp.template.meta_id'|trans }}</td>
-                            <td><code style="font-size:11px;">{{ template.getMetaTemplateId()|default('—') }}</code></td>
+                            <td><code style="font-size:11px;">{{ whatsappTemplate.getMetaTemplateId()|default('—') }}</code></td>
                         </tr>
                         <tr>
                             <td class="fw-b">{{ 'mautic.whatsapp.template.last_synced'|trans }}</td>
                             <td>
-                                {% if template.getLastSyncedAt() %}
-                                    {{ template.getLastSyncedAt()|date('Y-m-d H:i') }}
+                                {% if whatsappTemplate.getLastSyncedAt() %}
+                                    {{ whatsappTemplate.getLastSyncedAt()|date('Y-m-d H:i') }}
                                 {% else %}—{% endif %}
                             </td>
                         </tr>
