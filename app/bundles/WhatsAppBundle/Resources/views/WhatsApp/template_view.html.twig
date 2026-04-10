@@ -2,6 +2,19 @@
 
 {% block mauticContent %}whatsapp_templates{% endblock %}
 
+{# Shared helpers — defined outside blocks so they're available everywhere #}
+{% set statusBadgeClass = 'label-default' %}
+{% if whatsappTemplate.getStatus() == 'APPROVED' %}{% set statusBadgeClass = 'label-success' %}
+{% elseif whatsappTemplate.getStatus() == 'PENDING' %}{% set statusBadgeClass = 'label-warning' %}
+{% elseif whatsappTemplate.getStatus() == 'REJECTED' %}{% set statusBadgeClass = 'label-danger' %}
+{% endif %}
+
+{% set categoryBadgeClass = 'label-default' %}
+{% if whatsappTemplate.getCategory() == 'MARKETING' %}{% set categoryBadgeClass = 'label-primary' %}
+{% elseif whatsappTemplate.getCategory() == 'UTILITY' %}{% set categoryBadgeClass = 'label-info' %}
+{% elseif whatsappTemplate.getCategory() == 'AUTHENTICATION' %}{% set categoryBadgeClass = 'label-warning' %}
+{% endif %}
+
 {% block headerTitle %}{{ whatsappTemplate.getName() }}{% endblock %}
 
 {% block actions %}
@@ -13,18 +26,6 @@
 {% endblock %}
 
 {% block publishStatus %}
-    {% set statusBadgeClass = 'label-default' %}
-    {% if whatsappTemplate.getStatus() == 'APPROVED' %}{% set statusBadgeClass = 'label-success' %}
-    {% elseif whatsappTemplate.getStatus() == 'PENDING' %}{% set statusBadgeClass = 'label-warning' %}
-    {% elseif whatsappTemplate.getStatus() == 'REJECTED' %}{% set statusBadgeClass = 'label-danger' %}
-    {% endif %}
-
-    {% set categoryBadgeClass = 'label-default' %}
-    {% if whatsappTemplate.getCategory() == 'MARKETING' %}{% set categoryBadgeClass = 'label-primary' %}
-    {% elseif whatsappTemplate.getCategory() == 'UTILITY' %}{% set categoryBadgeClass = 'label-info' %}
-    {% elseif whatsappTemplate.getCategory() == 'AUTHENTICATION' %}{% set categoryBadgeClass = 'label-warning' %}
-    {% endif %}
-
     <span class="label {{ statusBadgeClass }}">{{ whatsappTemplate.getStatus() }}</span>
     <div class="label__divider"></div>
     <span class="label {{ categoryBadgeClass }}">{{ whatsappTemplate.getCategory()|default('—') }}</span>

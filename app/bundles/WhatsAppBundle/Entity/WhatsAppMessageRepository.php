@@ -116,6 +116,7 @@ class WhatsAppMessageRepository extends CommonRepository
 
         switch ($command) {
             case $this->translator->trans('mautic.core.searchcommand.lang'):
+            case 'lang':
                 $langUnique      = $this->generateRandomParameterName();
                 $langValue       = $filter->string.'_%';
                 $forceParameters = [
@@ -123,9 +124,15 @@ class WhatsAppMessageRepository extends CommonRepository
                     $unique     => $filter->string,
                 ];
                 $expr = $q->expr()->or(
-                    $q->expr()->eq('e.language', ":$unique"),
-                    $q->expr()->like('e.language', ":$langUnique")
+                    $q->expr()->eq('e.templateLanguage', ":$unique"),
+                    $q->expr()->like('e.templateLanguage', ":$langUnique")
                 );
+                $returnParameter = true;
+                break;
+
+            case $this->translator->trans('mautic.whatsapp.searchcommand.type'):
+            case 'type':
+                $expr = $q->expr()->eq('e.messageType', ":$unique");
                 $returnParameter = true;
                 break;
         }
@@ -156,6 +163,7 @@ class WhatsAppMessageRepository extends CommonRepository
             'mautic.core.searchcommand.ismine',
             'mautic.core.searchcommand.category',
             'mautic.core.searchcommand.lang',
+            'mautic.whatsapp.searchcommand.type',
         ];
 
         return array_merge($commands, parent::getSearchCommands());
