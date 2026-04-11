@@ -11,8 +11,6 @@ use Mautic\WhatsAppBundle\Model\WhatsAppModel;
 use Mautic\WhatsAppBundle\Service\WebhookStatusTracker;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\RouterInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AjaxController extends CommonAjaxController
 {
@@ -111,127 +109,120 @@ class AjaxController extends CommonAjaxController
     }
 
     /**
-     * Test the WhatsApp webhook by issuing a self-request to the public verify URL.
-     * This catches cases where Cloudflare / DNS / SSL prevents Meta from reaching us.
+     * Test the WhatsApp webhook configuration and report the current tracker state.
+     *
+     * NOTE: This does NOT make a self-request anymore. A self-request (PHP → HTTPS →
+     * Cloudflare → tunnel → same PHP-FPM pool) causes a worker deadlock because the
+     * round-trip is served by the same worker pool that's waiting for the response.
+     *
+     * Instead, we rely on the WebhookStatusTracker which records REAL events from Meta
+     * (verification GETs and delivery POSTs). The tracker reflects ground truth.
      */
     public function testWebhookAction(
         Request $request,
         CoreParametersHelper $coreParametersHelper,
-        RouterInterface $router,
-        HttpClientInterface $httpClient,
         WebhookStatusTracker $statusTracker,
         \Psr\Log\LoggerInterface $logger,
     ): JsonResponse {
         $logger->info('WhatsApp: testWebhookAction invoked');
 
-        $verifyToken = (string) $coreParametersHelper->get('whatsapp_webhook_verify_token');
+        $verifyToken     = (string) $coreParametersHelper->get('whatsapp_webhook_verify_token');
+        $siteUrl         = trim((string) $coreParametersHelper->get('site_url'), '/');
+        $whatsappEnabled = (bool) $coreParametersHelper->get('whatsapp_enabled');
+        $tokenSet        = '' !== $verifyToken;
+        $state           = $statusTracker->getState($tokenSet);
 
-        if ('' === $verifyToken) {
+        // Configuration validation
+        $issues = [];
+        if (!$whatsappEnabled) {
+            $issues[] = 'WhatsApp is not enabled in system configuration';
+        }
+        if (!$tokenSet) {
+            $issues[] = 'Webhook verify token is not set';
+        }
+        if ('' === $siteUrl) {
+            $issues[] = 'Site URL is not set (required for webhook URL to be public)';
+        }
+
+        if (!empty($issues)) {
             return new JsonResponse([
                 'status'  => 'broken',
-                'reason'  => 'No webhook verify token is configured. Enter one above and save.',
-                'details' => null,
-                'state'   => $statusTracker->getState(false),
-            ]);
-        }
-
-        // Prefer site_url (canonical public URL) so we test what Meta actually reaches.
-        $siteUrl = trim((string) $coreParametersHelper->get('site_url'), '/');
-
-        if ('' !== $siteUrl) {
-            $webhookUrl = $siteUrl.'/whatsapp/meta_cloud/callback';
-        } else {
-            $scheme     = $request->getScheme();
-            $host       = $request->getHttpHost();
-            $basePath   = $request->getBaseUrl();
-            $path       = $router->generate('mautic_whatsapp_webhook_callback', ['transport' => 'meta_cloud']);
-            $webhookUrl = $scheme.'://'.$host.$basePath.$path;
-        }
-
-        // Meta-style challenge
-        $challenge = 'mautic_selftest_'.bin2hex(random_bytes(8));
-        $testUrl   = $webhookUrl.'?hub_mode=subscribe&hub_verify_token='.urlencode($verifyToken).'&hub_challenge='.urlencode($challenge);
-
-        $logger->info('WhatsApp: test webhook url built', ['url' => $webhookUrl]);
-
-        try {
-            $response = $httpClient->request('GET', $testUrl, [
-                'timeout'           => 15,
-                'max_redirects'     => 3,
-                'verify_peer'       => false,
-                'verify_host'       => false,
-                'headers'           => [
-                    'User-Agent' => 'Mautic-WhatsApp-SelfTest/1.0',
+                'reason'  => 'Configuration incomplete: '.implode('; ', $issues),
+                'details' => [
+                    'issues'      => $issues,
+                    'webhook_url' => '' !== $siteUrl ? $siteUrl.'/whatsapp/meta_cloud/callback' : '(site_url not set)',
                 ],
+                'state' => $state,
             ]);
+        }
 
-            $statusCode = $response->getStatusCode();
-            $body       = $response->getContent(false);
+        $webhookUrl = $siteUrl.'/whatsapp/meta_cloud/callback';
 
-            $logger->info('WhatsApp: test webhook response', [
-                'status' => $statusCode,
-                'body'   => substr($body, 0, 500),
-            ]);
-
-            if (200 === $statusCode && trim($body) === $challenge) {
+        // Report based on actual tracked state from Meta webhook events
+        switch ($state['status']) {
+            case 'active':
                 return new JsonResponse([
                     'status'  => 'ok',
-                    'reason'  => 'Webhook is reachable and returned the correct challenge.',
+                    'reason'  => sprintf(
+                        'Webhook is active and healthy. Last event received: %s. Total events received: %d.',
+                        $state['last_received_at'] ?? 'never',
+                        $state['receive_count']
+                    ),
                     'details' => [
-                        'url'         => $webhookUrl,
-                        'status_code' => $statusCode,
+                        'webhook_url'      => $webhookUrl,
+                        'last_verified_at' => $state['last_verified_at'],
+                        'last_received_at' => $state['last_received_at'],
+                        'events_received'  => $state['receive_count'],
                     ],
-                    'state' => $statusTracker->getState(true),
+                    'state' => $state,
                 ]);
-            }
 
-            if (200 === $statusCode) {
+            case 'idle':
+                return new JsonResponse([
+                    'status'  => 'ok',
+                    'reason'  => sprintf(
+                        'Webhook is verified by Meta. Last verified: %s. No events in last 24h — this is normal if no messages have been sent recently.',
+                        $state['last_verified_at'] ?? 'unknown'
+                    ),
+                    'details' => [
+                        'webhook_url'      => $webhookUrl,
+                        'last_verified_at' => $state['last_verified_at'],
+                        'last_received_at' => $state['last_received_at'],
+                    ],
+                    'state' => $state,
+                ]);
+
+            case 'pending':
                 return new JsonResponse([
                     'status'  => 'broken',
-                    'reason'  => 'Webhook returned 200 but the challenge response did not match. Check the response body below — another app may be intercepting, or Mautic is returning an HTML error page.',
+                    'reason'  => 'Configuration is complete but Meta has not verified the webhook yet. In Meta Developer Dashboard → WhatsApp → Configuration → Webhook, paste the URL and verify token below, then click "Verify and save".',
                     'details' => [
-                        'url'              => $webhookUrl,
-                        'status_code'      => $statusCode,
-                        'expected'         => $challenge,
-                        'received_preview' => substr($body, 0, 500),
+                        'webhook_url'  => $webhookUrl,
+                        'verify_token' => $verifyToken,
+                        'next_step'    => 'Copy the URL and token to Meta Dashboard and click Verify and save',
                     ],
-                    'state' => $statusTracker->getState(true),
+                    'state' => $state,
                 ]);
-            }
 
-            return new JsonResponse([
-                'status'  => 'broken',
-                'reason'  => sprintf('Webhook returned HTTP %d. This usually means Cloudflare/WAF is blocking the request, or the URL is wrong.', $statusCode),
-                'details' => [
-                    'url'         => $webhookUrl,
-                    'status_code' => $statusCode,
-                    'body'        => substr($body, 0, 500),
-                ],
-                'state' => $statusTracker->getState(true),
-            ]);
-        } catch (\Throwable $e) {
-            $logger->error('WhatsApp: test webhook threw exception', [
-                'exception' => $e::class,
-                'message'   => $e->getMessage(),
-                'trace'     => $e->getTraceAsString(),
-            ]);
+            case 'error':
+                return new JsonResponse([
+                    'status'  => 'broken',
+                    'reason'  => 'Last webhook attempt from Meta failed: '.($state['last_error'] ?? 'unknown error'),
+                    'details' => [
+                        'webhook_url'   => $webhookUrl,
+                        'last_error'    => $state['last_error'],
+                        'last_error_at' => $state['last_error_at'],
+                    ],
+                    'state' => $state,
+                ]);
 
-            $message = $e->getMessage();
-            if ('' === $message) {
-                $message = $e::class.' (no message)';
-            }
-
-            return new JsonResponse([
-                'status'  => 'broken',
-                'reason'  => 'Could not reach the webhook URL: '.$message,
-                'details' => [
-                    'url'       => $webhookUrl,
-                    'test_url'  => $testUrl,
-                    'exception' => $e::class,
-                    'message'   => $message,
-                ],
-                'state' => $statusTracker->getState(true),
-            ]);
+            default:
+                return new JsonResponse([
+                    'status'  => 'broken',
+                    'reason'  => 'Webhook is not configured.',
+                    'details' => ['webhook_url' => $webhookUrl],
+                    'state'   => $state,
+                ]);
         }
     }
 }
