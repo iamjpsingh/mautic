@@ -59,7 +59,7 @@ Mautic.whatsappLoadTemplatePreview = function (templateId) {
     }
 
     mQuery.ajax({
-        url: mauticAjaxUrl + '?action=whatsapp:templatePreview&templateId=' + templateId,
+        url: mauticAjaxUrl + '?action=whatsApp:templatePreview&templateId=' + templateId,
         type: 'GET',
         dataType: 'json',
         success: function (response) {
@@ -359,7 +359,7 @@ Mautic.whatsappTestWebhook = function () {
     console.log('[WhatsApp] Test Connection: firing AJAX request');
 
     mQuery.ajax({
-        url: mauticAjaxUrl + '?action=whatsapp:testWebhook',
+        url: mauticAjaxUrl + '?action=whatsApp:testWebhook',
         type: 'POST',
         dataType: 'json',
         success: function (response, textStatus, xhr) {

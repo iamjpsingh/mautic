@@ -38,7 +38,7 @@ class WhatsAppListType extends AbstractType
                         'ignore_ids'   => $options['ignore_ids'],
                     ];
 
-                    return 'whatsapp:getLookupChoiceList&'.http_build_query($query);
+                    return 'whatsApp:getLookupChoiceList&'.http_build_query($query);
                 },
                 'multiple'     => false,
                 'required'     => false,
