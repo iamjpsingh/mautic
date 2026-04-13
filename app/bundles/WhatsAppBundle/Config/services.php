@@ -26,4 +26,16 @@ return function (ContainerConfigurator $configurator): void {
         ->args([Mautic\WhatsAppBundle\Entity\WhatsAppTemplate::class]);
 
     $services->alias('mautic.whatsapp.model.whatsapp', Mautic\WhatsAppBundle\Model\WhatsAppModel::class);
+
+    // Register lowercase-namespace aliases so Mautic's AJAX dispatcher (which does
+    // ucfirst('whatsapp') = 'Whatsapp', losing the camelCase 'A' in our bundle name)
+    // can resolve the controller via the service container. Without these aliases,
+    // Symfony's ControllerResolver falls back to `new $class()` which fails on
+    // constructors that need DI.
+    $services->alias('Mautic\\WhatsappBundle\\Controller\\AjaxController', Mautic\WhatsAppBundle\Controller\AjaxController::class)
+        ->public();
+    $services->alias('Mautic\\WhatsappBundle\\Controller\\WhatsAppController', Mautic\WhatsAppBundle\Controller\WhatsAppController::class)
+        ->public();
+    $services->alias('Mautic\\WhatsappBundle\\Controller\\WebhookController', Mautic\WhatsAppBundle\Controller\WebhookController::class)
+        ->public();
 };
