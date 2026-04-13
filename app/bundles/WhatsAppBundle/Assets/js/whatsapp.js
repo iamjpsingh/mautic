@@ -356,16 +356,24 @@ Mautic.whatsappTestWebhook = function () {
     btn.html('<i class="ri-loader-line ri-spin"></i> Testing...');
     result.html('');
 
+    console.log('[WhatsApp] Test Connection: firing AJAX request');
+
     mQuery.ajax({
         url: mauticAjaxUrl + '?action=whatsapp:testWebhook',
         type: 'POST',
         dataType: 'json',
-        success: function (response) {
+        success: function (response, textStatus, xhr) {
             btn.prop('disabled', false);
             btn.html('<i class="ri-plug-line"></i> Test Connection');
 
+            console.log('[WhatsApp] Test Connection SUCCESS callback:', {
+                status: xhr.status,
+                response: response,
+                textStatus: textStatus
+            });
+
             var html = '';
-            if (response.status === 'ok') {
+            if (response && response.status === 'ok') {
                 html = '<div class="alert alert-success">'
                     + '<i class="ri-checkbox-circle-line"></i> <strong>Success!</strong> '
                     + Mautic.whatsappEscapeHtml(response.reason || '')
@@ -373,33 +381,44 @@ Mautic.whatsappTestWebhook = function () {
             } else {
                 html = '<div class="alert alert-danger">'
                     + '<i class="ri-close-circle-line"></i> <strong>Broken:</strong> '
-                    + Mautic.whatsappEscapeHtml(response.reason || 'Unknown error');
+                    + Mautic.whatsappEscapeHtml((response && response.reason) || 'Unknown error');
 
-                if (response.details) {
-                    html += '<pre style="margin-top:10px;max-height:200px;overflow:auto;font-size:11px;background:#fff;">';
-                    html += Mautic.whatsappEscapeHtml(JSON.stringify(response.details, null, 2));
-                    html += '</pre>';
-                }
-
+                html += '<pre style="margin-top:10px;max-height:300px;overflow:auto;font-size:11px;background:#fff;padding:8px;">';
+                html += Mautic.whatsappEscapeHtml('Raw response: ' + JSON.stringify(response, null, 2));
+                html += '</pre>';
                 html += '</div>';
             }
 
             result.html(html);
 
-            // Refresh the status panel if state was returned
-            if (response.state) {
+            if (response && response.state) {
                 Mautic.whatsappUpdateWebhookStatusPanel(response.state);
             }
         },
-        error: function (xhr) {
+        error: function (xhr, textStatus, errorThrown) {
             btn.prop('disabled', false);
             btn.html('<i class="ri-plug-line"></i> Test Connection');
-            result.html(
-                '<div class="alert alert-danger">'
+
+            console.error('[WhatsApp] Test Connection ERROR callback:', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                textStatus: textStatus,
+                errorThrown: errorThrown,
+                responseText: xhr.responseText
+            });
+
+            var html = '<div class="alert alert-danger">'
                 + '<i class="ri-close-circle-line"></i> <strong>Request failed:</strong> '
-                + Mautic.whatsappEscapeHtml(xhr.statusText || 'Unknown error')
-                + '</div>'
-            );
+                + Mautic.whatsappEscapeHtml('HTTP ' + xhr.status + ' ' + (xhr.statusText || errorThrown || 'unknown'));
+
+            if (xhr.responseText) {
+                html += '<pre style="margin-top:10px;max-height:300px;overflow:auto;font-size:11px;background:#fff;padding:8px;">';
+                html += Mautic.whatsappEscapeHtml(xhr.responseText.substring(0, 2000));
+                html += '</pre>';
+            }
+            html += '</div>';
+
+            result.html(html);
         }
     });
 };

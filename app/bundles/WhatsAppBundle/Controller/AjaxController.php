@@ -124,6 +124,34 @@ class AjaxController extends CommonAjaxController
         WebhookStatusTracker $statusTracker,
         \Psr\Log\LoggerInterface $logger,
     ): JsonResponse {
+        try {
+            return $this->runWebhookTest($coreParametersHelper, $statusTracker, $logger);
+        } catch (\Throwable $e) {
+            $logger->error('WhatsApp: testWebhookAction threw', [
+                'exception' => $e::class,
+                'message'   => $e->getMessage(),
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+            ]);
+
+            return new JsonResponse([
+                'status'  => 'broken',
+                'reason'  => 'Test Connection threw an exception: '.$e->getMessage(),
+                'details' => [
+                    'exception' => $e::class,
+                    'message'   => $e->getMessage(),
+                    'file'      => $e->getFile(),
+                    'line'      => $e->getLine(),
+                ],
+            ]);
+        }
+    }
+
+    private function runWebhookTest(
+        CoreParametersHelper $coreParametersHelper,
+        WebhookStatusTracker $statusTracker,
+        \Psr\Log\LoggerInterface $logger,
+    ): JsonResponse {
         $logger->info('WhatsApp: testWebhookAction invoked');
 
         $verifyToken     = (string) $coreParametersHelper->get('whatsapp_webhook_verify_token');
