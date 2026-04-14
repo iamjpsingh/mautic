@@ -31,6 +31,7 @@ use Mautic\WhatsAppBundle\Entity\WhatsAppStatRepository;
 use Mautic\WhatsAppBundle\Event\WhatsAppMessageEvent;
 use Mautic\WhatsAppBundle\Event\WhatsAppSendEvent;
 use Mautic\WhatsAppBundle\Form\Type\WhatsAppType;
+use Mautic\WhatsAppBundle\Service\SessionWindowTracker;
 use Mautic\WhatsAppBundle\WhatsApp\TransportChain;
 use Mautic\WhatsAppBundle\WhatsAppEvents;
 use Psr\Log\LoggerInterface;
@@ -54,6 +55,7 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
         protected MessageQueueModel $messageQueueModel,
         protected TransportChain $transport,
         private CacheStorageHelper $cacheStorageHelper,
+        private SessionWindowTracker $sessionWindowTracker,
         EntityManagerInterface $em,
         CorePermissions $security,
         EventDispatcherInterface $dispatcher,
@@ -295,6 +297,8 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
 
             $stats = [];
 
+            $isSessionMessage = WhatsAppMessage::MESSAGE_TYPE_SESSION === $message->getMessageType();
+
             if (count($contacts)) {
                 /** @var Lead $lead */
                 foreach ($contacts as $lead) {
@@ -308,6 +312,46 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                             'sent'   => false,
                             'status' => 'mautic.whatsapp.campaign.failed.missing_number',
                         ];
+                        $stat->setIsFailed(true);
+                        $stat->setStatus(WhatsAppStat::STATUS_FAILED);
+                        $stat->addDetail('failed', 'Contact has no phone number');
+                        $stats[] = $stat;
+                        ++$failedCount;
+
+                        continue;
+                    }
+
+                    // E.164 format check: digits after optional '+', 7-15 digits total.
+                    // Meta rejects malformed numbers — fail fast with a clear reason
+                    // instead of burning an API call.
+                    if (!self::isE164($leadPhoneNumber)) {
+                        $results[$leadId] = [
+                            'sent'   => false,
+                            'status' => 'mautic.whatsapp.campaign.failed.invalid_number',
+                        ];
+                        $stat->setIsFailed(true);
+                        $stat->setStatus(WhatsAppStat::STATUS_FAILED);
+                        $stat->addDetail('failed', sprintf('Invalid phone format (expected E.164): %s', $leadPhoneNumber));
+                        $stats[] = $stat;
+                        ++$failedCount;
+
+                        continue;
+                    }
+
+                    // 24-hour customer service window enforcement for session (free-form) messages.
+                    // Meta only permits session messages within 24 hours of the contact's last
+                    // inbound message. If the window is closed (or the contact has never
+                    // messaged), skip the send and record a clear failure reason.
+                    if ($isSessionMessage && !$this->sessionWindowTracker->isWindowOpen($leadId)) {
+                        $results[$leadId] = [
+                            'sent'   => false,
+                            'status' => 'mautic.whatsapp.campaign.failed.outside_session_window',
+                        ];
+                        $stat->setIsFailed(true);
+                        $stat->setStatus(WhatsAppStat::STATUS_FAILED);
+                        $stat->addDetail('failed', 'Outside 24h session window — contact must reply first');
+                        $stats[] = $stat;
+                        ++$failedCount;
 
                         continue;
                     }
@@ -367,6 +411,10 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
                         if (is_string($metadata) && '' !== $metadata) {
                             $stat->setWhatsappMessageId($metadata);
                         }
+
+                        // Bookkeeping for diagnostics — does not open a session window
+                        // (only inbound messages from the contact can do that).
+                        $this->sessionWindowTracker->recordOutbound($leadId);
 
                         ++$sentCount;
                     }
@@ -790,6 +838,18 @@ class WhatsAppModel extends FormModel implements AjaxLookupModelInterface
      *
      * @return array<mixed>
      */
+    /**
+     * Validate E.164 phone format (optional leading '+', 7-15 digits).
+     *
+     * Meta's Cloud API rejects non-E.164 numbers. We pre-check locally so a
+     * malformed number fails fast with a meaningful reason rather than
+     * burning an API call and receiving an opaque Meta error.
+     */
+    public static function isE164(string $number): bool
+    {
+        return 1 === preg_match('/^\+?[1-9]\d{6,14}$/', $number);
+    }
+
     public function getLookupResults($type, $filter = '', $limit = 10, $start = 0, $options = []): array
     {
         $results = [];
