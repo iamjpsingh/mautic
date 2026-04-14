@@ -63,14 +63,19 @@ class WebhookController extends AbstractController
 
             $this->statusTracker->recordReceived();
 
-            // Process status updates
+            // Process status updates + inbound messages
             foreach ($payload['entry'] ?? [] as $entry) {
                 foreach ($entry['changes'] ?? [] as $change) {
                     $value = $change['value'] ?? [];
 
-                    // Process delivery statuses
+                    // Delivery statuses (sent/delivered/read/failed)
                     foreach ($value['statuses'] ?? [] as $status) {
                         $this->processStatus($status);
+                    }
+
+                    // Inbound messages (replies from contacts)
+                    foreach ($value['messages'] ?? [] as $message) {
+                        $this->processInbound($message);
                     }
                 }
             }
@@ -136,5 +141,52 @@ class WebhookController extends AbstractController
         $timestamp = $status['timestamp'] ?? '';
 
         $this->webhookProcessor->processDeliveryStatus($messageId, $statusType, $timestamp);
+    }
+
+    /**
+     * Process an inbound message entry from the Meta webhook payload.
+     *
+     * Extracts the sender number + message body and hands off to
+     * WebhookProcessorService, which updates the session window tracker,
+     * checks for opt-out keywords, and dispatches the reply event.
+     *
+     * @param array<string, mixed> $message
+     */
+    private function processInbound(array $message): void
+    {
+        $from = $message['from'] ?? '';
+        if ('' === $from) {
+            return;
+        }
+
+        // Meta strips the leading '+', add it back for E.164 lookup.
+        $senderNumber = '+'.ltrim((string) $from, '+');
+
+        $type = $message['type'] ?? '';
+        $body = match ($type) {
+            'text'        => trim((string) ($message['text']['body'] ?? '')),
+            'button'      => trim((string) ($message['button']['text'] ?? '')),
+            'interactive' => trim((string) (
+                $message['interactive']['button_reply']['title']
+                ?? $message['interactive']['list_reply']['title']
+                ?? ''
+            )),
+            default => '',
+        };
+
+        if ('' === $body) {
+            $this->mauticLogger->debug('WhatsApp inbound: skipping non-text message type', [
+                'type' => $type,
+                'from' => $senderNumber,
+            ]);
+
+            return;
+        }
+
+        $timestamp = isset($message['timestamp'])
+            ? (new \DateTime())->setTimestamp((int) $message['timestamp'])
+            : null;
+
+        $this->webhookProcessor->processInboundMessage($senderNumber, $body, $timestamp);
     }
 }
