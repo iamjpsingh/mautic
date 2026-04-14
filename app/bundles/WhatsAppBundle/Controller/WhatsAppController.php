@@ -909,6 +909,15 @@ class WhatsAppController extends FormController
             return $this->redirectToRoute('mautic_whatsapp_index');
         }
 
+        // Session messages cannot be broadcast — they require a live 24h window
+        // per contact. Guard the endpoint in case the button is reached via a
+        // cached page, URL tampering, or a bookmarked deep link.
+        if (WhatsAppMessage::MESSAGE_TYPE_SESSION === $message->getMessageType()) {
+            $this->addFlashMessage('mautic.whatsapp.session.cannot_broadcast', [], 'error');
+
+            return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
+        }
+
         $lists = $message->getLists();
         if ($lists->count() === 0) {
             $this->addFlashMessage('No segments assigned to this message. Edit the message and add a segment first.', [], 'error', false);
@@ -971,6 +980,15 @@ class WhatsAppController extends FormController
         if (null === $message) {
             $this->addFlashMessage('mautic.whatsapp.error.notfound', ['%id%' => $objectId], 'error');
             return $this->redirectToRoute('mautic_whatsapp_index');
+        }
+
+        // Test send has no 24h window context, so session messages are not
+        // eligible. The user must trigger session messages from a campaign
+        // reply decision branch where a real inbound has opened the window.
+        if (WhatsAppMessage::MESSAGE_TYPE_SESSION === $message->getMessageType()) {
+            $this->addFlashMessage('mautic.whatsapp.session.cannot_test_send', [], 'error');
+
+            return $this->redirectToRoute('mautic_whatsapp_action', ['objectAction' => 'view', 'objectId' => $objectId]);
         }
 
         // Get contact ID from request
@@ -1047,6 +1065,14 @@ class WhatsAppController extends FormController
                         'expr'   => 'eq',
                         'value'  => true,
                     ],
+                    // Exclude session messages — they need a live 24h window and
+                    // the contact page can't guarantee one is open. Templates,
+                    // media, and interactive messages are cold-sendable.
+                    [
+                        'column' => 'e.messageType',
+                        'expr'   => 'neq',
+                        'value'  => WhatsAppMessage::MESSAGE_TYPE_SESSION,
+                    ],
                 ],
             ],
             'orderBy'    => 'e.name',
@@ -1096,6 +1122,18 @@ class WhatsAppController extends FormController
             $message->getCreatedBy()
         )) {
             return $this->accessDenied();
+        }
+
+        // Defensive backstop: reject session sends here too, in case the
+        // runtime window check passes for an edge case we didn't anticipate.
+        // The contact-view send has no reply context we can trust.
+        if (WhatsAppMessage::MESSAGE_TYPE_SESSION === $message->getMessageType()) {
+            $this->addFlashMessage('mautic.whatsapp.session.cannot_send_to_contact', [], 'error');
+
+            return $this->redirectToRoute('mautic_contact_action', [
+                'objectAction' => 'view',
+                'objectId'     => $contactId,
+            ]);
         }
 
         try {

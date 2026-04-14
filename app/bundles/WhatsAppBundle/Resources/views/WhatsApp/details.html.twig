@@ -27,18 +27,24 @@
 {% block actions %}
     {% set customButtons = [] %}
 
-    {# Send to Segment button #}
-    {% set sendButton = {
-        'attr': {
-            'data-toggle': 'ajax',
-            'href': path('mautic_whatsapp_action', {'objectAction': 'send', 'objectId': whatsapp.getId()}),
-        },
-        'iconClass': 'ri-send-plane-line',
-        'btnText': 'Send to Segment',
-        'primary': true,
-        'priority': 500,
-    } %}
-    {% set customButtons = customButtons|merge([sendButton]) %}
+    {# Send to Segment: only for cold-sendable message types.
+       Session (free-form) messages are gated behind the 24h WhatsApp
+       customer-service window, which only opens after the contact replies.
+       They belong on campaign reply branches — not a bulk send button. #}
+    {% set isSessionMessage = whatsapp.getMessageType() == 'session' %}
+    {% if not isSessionMessage %}
+        {% set sendButton = {
+            'attr': {
+                'data-toggle': 'ajax',
+                'href': path('mautic_whatsapp_action', {'objectAction': 'send', 'objectId': whatsapp.getId()}),
+            },
+            'iconClass': 'ri-send-plane-line',
+            'btnText': 'Send to Segment',
+            'primary': true,
+            'priority': 500,
+        } %}
+        {% set customButtons = customButtons|merge([sendButton]) %}
+    {% endif %}
 
     {{- include('@MauticCore/Helper/page_actions.html.twig',
         {
@@ -298,6 +304,13 @@
                         }) }}
                     {% endif %}
                 {% elseif 'session' == messageType %}
+                    <div class="pa-sm" style="background:#fff8e1;border-bottom:1px solid #ffe082;">
+                        <small style="color:#795548;">
+                            <i class="ri-information-line"></i>
+                            <strong>{{ 'mautic.whatsapp.session.restricted.title'|trans }}</strong><br>
+                            {{ 'mautic.whatsapp.session.restricted.detail'|trans }}
+                        </small>
+                    </div>
                     {{ include('@MauticWhatsApp/Helper/whatsapp_bubble.html.twig', {
                         'body': whatsapp.getMessage(),
                     }) }}

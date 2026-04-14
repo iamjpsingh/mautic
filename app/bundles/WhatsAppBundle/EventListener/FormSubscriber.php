@@ -7,7 +7,8 @@ namespace Mautic\WhatsAppBundle\EventListener;
 use Mautic\FormBundle\Event\FormBuilderEvent;
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\FormBundle\FormEvents;
-use Mautic\WhatsAppBundle\Form\Type\WhatsAppSendType;
+use Mautic\WhatsAppBundle\Entity\WhatsAppMessage;
+use Mautic\WhatsAppBundle\Form\Type\WhatsAppTemplateSendType;
 use Mautic\WhatsAppBundle\Model\WhatsAppModel;
 use Mautic\WhatsAppBundle\WhatsApp\TransportChain;
 use Mautic\LeadBundle\Tracker\ContactTracker;
@@ -37,13 +38,17 @@ class FormSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // Form submissions happen without a 24h WhatsApp session window, so
+        // only template (pre-approved, cold-sendable) messages are valid here.
+        // Session/free-form messages require a prior inbound reply from the
+        // contact — use the campaign reply decision path for that case.
         $event->addSubmitAction('whatsapp.send', [
             'group'       => 'mautic.whatsapp.actions',
             'label'       => 'mautic.whatsapp.form.action.send',
             'description' => 'mautic.whatsapp.form.action.send.descr',
-            'formType'    => WhatsAppSendType::class,
+            'formType'    => WhatsAppTemplateSendType::class,
             'formTypeOptions' => ['update_select' => 'formaction_properties_whatsapp'],
-            'formTheme'   => '@MauticWhatsApp/FormTheme/WhatsAppSendList/whatsappsend_list_row.html.twig',
+            'formTheme'   => '@MauticWhatsApp/FormTheme/WhatsAppTemplateSendList/whatsapptemplatesend_list_row.html.twig',
             'eventName'   => FormEvents::ON_EXECUTE_SUBMIT_ACTION,
         ]);
     }
@@ -59,6 +64,13 @@ class FormSubscriber implements EventSubscriberInterface
         $message = $this->model->getEntity($whatsappId);
 
         if (null === $message || false === $message->isPublished()) {
+            return;
+        }
+
+        // Defensive: block session-type messages that slipped through from
+        // legacy form actions. Session messages require a live 24h window
+        // and form submissions don't open one.
+        if (WhatsAppMessage::MESSAGE_TYPE_SESSION === $message->getMessageType()) {
             return;
         }
 

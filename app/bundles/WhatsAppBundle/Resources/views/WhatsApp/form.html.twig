@@ -69,6 +69,11 @@
   <!-- Session Message Section (hidden by default) -->
   <div id="whatsapp-session-section"{% if messageType != 'session' %} class="hide"{% endif %}>
     <h4><i class="ri-chat-1-line"></i> {{ 'mautic.whatsapp.session.section.title'|trans }}</h4>
+    <div class="alert alert-warning" style="margin-bottom:15px;">
+      <i class="ri-information-line"></i>
+      <strong>{{ 'mautic.whatsapp.session.restricted.title'|trans }}</strong>
+      <p style="margin:5px 0 0 0;">{{ 'mautic.whatsapp.session.restricted.detail'|trans }}</p>
+    </div>
     <div class="row">
       <div class="col-md-12">
         <div class="characters-count pull-right">
