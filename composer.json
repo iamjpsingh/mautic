@@ -23,6 +23,7 @@
   "require": {
     "composer/installers": "^2.3",
     "cweagans/composer-patches": "^1.7.3",
+    "iamjpsingh/mautic-ses-plugin": "^1.0",
     "mautic/core-lib": "^7.0"
   },
   "require-dev": {
